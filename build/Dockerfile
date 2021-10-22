@@ -2,13 +2,13 @@
 
 FROM golang:alpine as go-builder
 
-ENV GO111MODULE=on GOPROXY=https://goproxy.cn,direct
+ENV GO111MODULE=on GOPROXY=https://goproxy.cn,direct APP_NAME=learning
 
 WORKDIR /build
 
 COPY . .
 
-RUN go mod tidy && CGO_ENABLED=0 go build -ldflags "-X learning/config.BuildDate=$(date '+%F_%H:%M:%S') -X learning/config.Release=true" -o app .
+RUN ls -a && go mod tidy && CGO_ENABLED=0 go build -ldflags "-X ${APP_NAME}/config.BuildDate=$(date '+%F_%H:%M:%S') -X ${APP_NAME}/config.Release=true" -o app .
 
 # Final stage
 FROM scratch

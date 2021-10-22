@@ -1,2 +1,2 @@
-rpcPort: 8090
-httpPort: 8091
+rpcAddr: :8090
+httpAddr: :8091

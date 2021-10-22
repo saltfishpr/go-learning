@@ -6,6 +6,7 @@ set -o pipefail
 if [ -d output ]; then
   echo "----- Clean Build  -----"
   rm -rf output
+  echo "remove output"
 else
   echo "no output to clean"
 fi

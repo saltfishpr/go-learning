@@ -1,34 +1,18 @@
 # It's necessary to set this because some environments don't link sh -> bash.
 SHELL := /usr/bin/env bash
 
-export GO111MODULE=on
-export GOPROXY=https://goproxy.cn,direct
+export WORKDIR=$(shell pwd)
 export APP_NAME=learning
 
-.PHONY: build
-# build executable file for dev
-build:
-	sh scripts/build.sh
+.PHONY: server
+# run server
+server:
+	go run learning/cmd/server
 
-.PHONY: build
-# build executable file for release
-release:
-	sh scripts/release.sh
-
-.PHONY: run
-# run executable file
-run:
-	sh output/run.sh
-
-.PHONY: clean
-# clean build cache and docker images
-clean:
-	sh scripts/clean.sh
-
-.PHONY: docker
-# build a docker image and run a container
-docker:
-	sh scripts/docker_build.sh
+.PHONY: client
+# run client
+client:
+	go run learning/cmd/client
 
 .PHONY: generate
 # run go generate

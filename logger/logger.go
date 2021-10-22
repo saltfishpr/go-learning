@@ -34,13 +34,14 @@ func New(release string) *zap.SugaredLogger {
 		encoderConfig := zap.NewDevelopmentEncoderConfig()
 		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 		encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+		encoderConfig.EncodeCaller = zapcore.FullCallerEncoder
 		encoder = zapcore.NewConsoleEncoder(encoderConfig)
 		level = zapcore.DebugLevel
 	}
 
 	writeSyncer := getLogWriter(fmt.Sprintf("logs/%s.log", time.Now().Format("D2006-01-02T15-04-05")))
 	core := zapcore.NewCore(encoder, zapcore.NewMultiWriteSyncer(writeSyncer, os.Stdout), level)
-	logger := zap.New(core, zap.AddCaller())
+	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 	return logger.Sugar()
 }
 

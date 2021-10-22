@@ -5,21 +5,21 @@
 package service
 
 import (
+	"context"
+
 	v1 "learning/api/hello/v1"
 	"learning/logger"
 )
 
-// HelloService 定义rpc调用接口
-type HelloService interface {
-	Hello(*v1.String, *v1.String) error
+// HelloServerImpl 实现 HelloServer 服务
+type HelloServerImpl struct {
+	v1.UnimplementedHelloServer
 }
 
-// HelloServiceImpl 实现 HelloService 服务
-type HelloServiceImpl struct{}
-
 // Hello 返回 "hello {{request}}"
-func (p *HelloServiceImpl) Hello(request *v1.String, reply *v1.String) error {
+func (s *HelloServerImpl) Hello(_ context.Context, request *v1.String) (*v1.String, error) {
 	logger.Infof("get request: %s", request.GetValue())
-	reply.Value = "hello:" + request.GetValue()
-	return nil
+	reply := &v1.String{}
+	reply.Value = "hello " + request.GetValue()
+	return reply, nil
 }

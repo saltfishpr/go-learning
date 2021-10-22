@@ -2,8 +2,12 @@ syntax = "proto3";
 
 package hello.v1;
 
-option go_package = "api/hello/v1";
+option go_package = "learning/api/hello/v1";
 
 message String {
     string value = 1;
+}
+
+service Hello {
+    rpc Hello (String) returns (String);
 }
