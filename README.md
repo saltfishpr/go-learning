@@ -1,1 +1,3 @@
-# lab
+# Algorithm
+
+some algorithm problems
