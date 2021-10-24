@@ -5,6 +5,8 @@ package main
 
 import (
 	"context"
+	"io"
+	"time"
 
 	v1 "learning/api/hello/v1"
 	"learning/config"
@@ -27,9 +29,28 @@ func main() {
 	defer conn.Close()
 
 	client := v1.NewHelloClient(conn)
-	reply, err := client.Hello(context.Background(), &v1.String{Value: "world"})
+	stream, err := client.Channel(context.Background())
 	if err != nil {
 		logger.Fatal(err)
 	}
-	logger.Info(reply.GetValue())
+
+	go func() {
+		for {
+			if err := stream.Send(&v1.String{Value: "world"}); err != nil {
+				logger.Fatal(err)
+			}
+			time.Sleep(time.Second)
+		}
+	}()
+
+	for {
+		reply, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			logger.Fatal(err)
+		}
+		logger.Info(reply.GetValue())
+	}
 }
