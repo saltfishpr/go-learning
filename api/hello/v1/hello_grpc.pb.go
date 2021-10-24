@@ -14,55 +14,56 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// HelloClient is the client API for Hello service.
+// PubSubClient is the client API for PubSub service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type HelloClient interface {
-	Hello(ctx context.Context, in *String, opts ...grpc.CallOption) (*String, error)
-	Channel(ctx context.Context, opts ...grpc.CallOption) (Hello_ChannelClient, error)
+type PubSubClient interface {
+	Publish(ctx context.Context, in *String, opts ...grpc.CallOption) (*String, error)
+	Subscribe(ctx context.Context, in *String, opts ...grpc.CallOption) (PubSub_SubscribeClient, error)
 }
 
-type helloClient struct {
+type pubSubClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewHelloClient(cc grpc.ClientConnInterface) HelloClient {
-	return &helloClient{cc}
+func NewPubSubClient(cc grpc.ClientConnInterface) PubSubClient {
+	return &pubSubClient{cc}
 }
 
-func (c *helloClient) Hello(ctx context.Context, in *String, opts ...grpc.CallOption) (*String, error) {
+func (c *pubSubClient) Publish(ctx context.Context, in *String, opts ...grpc.CallOption) (*String, error) {
 	out := new(String)
-	err := c.cc.Invoke(ctx, "/hello.v1.Hello/Hello", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/hello.v1.PubSub/Publish", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *helloClient) Channel(ctx context.Context, opts ...grpc.CallOption) (Hello_ChannelClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Hello_ServiceDesc.Streams[0], "/hello.v1.Hello/Channel", opts...)
+func (c *pubSubClient) Subscribe(ctx context.Context, in *String, opts ...grpc.CallOption) (PubSub_SubscribeClient, error) {
+	stream, err := c.cc.NewStream(ctx, &PubSub_ServiceDesc.Streams[0], "/hello.v1.PubSub/Subscribe", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &helloChannelClient{stream}
+	x := &pubSubSubscribeClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
 	return x, nil
 }
 
-type Hello_ChannelClient interface {
-	Send(*String) error
+type PubSub_SubscribeClient interface {
 	Recv() (*String, error)
 	grpc.ClientStream
 }
 
-type helloChannelClient struct {
+type pubSubSubscribeClient struct {
 	grpc.ClientStream
 }
 
-func (x *helloChannelClient) Send(m *String) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *helloChannelClient) Recv() (*String, error) {
+func (x *pubSubSubscribeClient) Recv() (*String, error) {
 	m := new(String)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -70,100 +71,94 @@ func (x *helloChannelClient) Recv() (*String, error) {
 	return m, nil
 }
 
-// HelloServer is the server API for Hello service.
-// All implementations must embed UnimplementedHelloServer
+// PubSubServer is the server API for PubSub service.
+// All implementations must embed UnimplementedPubSubServer
 // for forward compatibility
-type HelloServer interface {
-	Hello(context.Context, *String) (*String, error)
-	Channel(Hello_ChannelServer) error
-	mustEmbedUnimplementedHelloServer()
+type PubSubServer interface {
+	Publish(context.Context, *String) (*String, error)
+	Subscribe(*String, PubSub_SubscribeServer) error
+	mustEmbedUnimplementedPubSubServer()
 }
 
-// UnimplementedHelloServer must be embedded to have forward compatible implementations.
-type UnimplementedHelloServer struct {
+// UnimplementedPubSubServer must be embedded to have forward compatible implementations.
+type UnimplementedPubSubServer struct {
 }
 
-func (UnimplementedHelloServer) Hello(context.Context, *String) (*String, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Hello not implemented")
+func (UnimplementedPubSubServer) Publish(context.Context, *String) (*String, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Publish not implemented")
 }
-func (UnimplementedHelloServer) Channel(Hello_ChannelServer) error {
-	return status.Errorf(codes.Unimplemented, "method Channel not implemented")
+func (UnimplementedPubSubServer) Subscribe(*String, PubSub_SubscribeServer) error {
+	return status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
 }
-func (UnimplementedHelloServer) mustEmbedUnimplementedHelloServer() {}
+func (UnimplementedPubSubServer) mustEmbedUnimplementedPubSubServer() {}
 
-// UnsafeHelloServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to HelloServer will
+// UnsafePubSubServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PubSubServer will
 // result in compilation errors.
-type UnsafeHelloServer interface {
-	mustEmbedUnimplementedHelloServer()
+type UnsafePubSubServer interface {
+	mustEmbedUnimplementedPubSubServer()
 }
 
-func RegisterHelloServer(s grpc.ServiceRegistrar, srv HelloServer) {
-	s.RegisterService(&Hello_ServiceDesc, srv)
+func RegisterPubSubServer(s grpc.ServiceRegistrar, srv PubSubServer) {
+	s.RegisterService(&PubSub_ServiceDesc, srv)
 }
 
-func _Hello_Hello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PubSub_Publish_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(String)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HelloServer).Hello(ctx, in)
+		return srv.(PubSubServer).Publish(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/hello.v1.Hello/Hello",
+		FullMethod: "/hello.v1.PubSub/Publish",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HelloServer).Hello(ctx, req.(*String))
+		return srv.(PubSubServer).Publish(ctx, req.(*String))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Hello_Channel_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(HelloServer).Channel(&helloChannelServer{stream})
+func _PubSub_Subscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(String)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(PubSubServer).Subscribe(m, &pubSubSubscribeServer{stream})
 }
 
-type Hello_ChannelServer interface {
+type PubSub_SubscribeServer interface {
 	Send(*String) error
-	Recv() (*String, error)
 	grpc.ServerStream
 }
 
-type helloChannelServer struct {
+type pubSubSubscribeServer struct {
 	grpc.ServerStream
 }
 
-func (x *helloChannelServer) Send(m *String) error {
+func (x *pubSubSubscribeServer) Send(m *String) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *helloChannelServer) Recv() (*String, error) {
-	m := new(String)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-// Hello_ServiceDesc is the grpc.ServiceDesc for Hello service.
+// PubSub_ServiceDesc is the grpc.ServiceDesc for PubSub service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Hello_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "hello.v1.Hello",
-	HandlerType: (*HelloServer)(nil),
+var PubSub_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "hello.v1.PubSub",
+	HandlerType: (*PubSubServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Hello",
-			Handler:    _Hello_Hello_Handler,
+			MethodName: "Publish",
+			Handler:    _PubSub_Publish_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "Channel",
-			Handler:       _Hello_Channel_Handler,
+			StreamName:    "Subscribe",
+			Handler:       _PubSub_Subscribe_Handler,
 			ServerStreams: true,
-			ClientStreams: true,
 		},
 	},
 	Metadata: "api/hello/v1/hello.proto",

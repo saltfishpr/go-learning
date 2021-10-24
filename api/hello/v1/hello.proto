@@ -8,8 +8,7 @@ message String {
     string value = 1;
 }
 
-service Hello {
-    rpc Hello (String) returns (String);
-
-    rpc Channel (stream String) returns (stream String);
+service PubSub {
+    rpc Publish (String) returns (String);
+    rpc Subscribe (String) returns (stream String);
 }

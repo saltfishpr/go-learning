@@ -3,6 +3,7 @@ module learning
 go 1.17
 
 require (
+	github.com/moby/moby v20.10.9+incompatible
 	github.com/spf13/viper v1.9.0
 	go.uber.org/zap v1.19.1
 	google.golang.org/grpc v1.40.0

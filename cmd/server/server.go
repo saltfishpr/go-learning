@@ -15,19 +15,24 @@ import (
 	"google.golang.org/grpc"
 )
 
+func init() {
+	config.Init()
+	logger.Init()
+}
+
 func main() {
-	err := config.Init()
-	if err != nil {
-		logger.Fatal("init config failed: ", err)
-	}
+	defer logger.Sync()
+	logger.Info("build date:", config.BuildDate)
+
+	grpcServer := grpc.NewServer()
+	v1.RegisterPubSubServer(grpcServer, service.NewPubSubServerImpl())
 
 	listen, err := net.Listen("tcp", viper.GetString("rpcAddr"))
 	if err != nil {
 		logger.Fatalf("failed to listen: %v", err)
 	}
-	grpcServer := grpc.NewServer()
-	v1.RegisterHelloServer(grpcServer, &service.HelloServerImpl{})
 	logger.Info("server listening at ", listen.Addr())
+
 	if err := grpcServer.Serve(listen); err != nil {
 		logger.Fatalf("failed to serve: %v", err)
 	}

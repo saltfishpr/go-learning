@@ -1,2 +1,7 @@
 rpcAddr: :8090
 httpAddr: :8091
+
+lumberjack:
+  max_size: 10
+  max_age: 30
+  max_backups: 5

@@ -11,12 +11,19 @@ import (
 
 	"learning/config"
 
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-var sugar = New(config.Release)
+// 初始化前使用默认配置
+var sugar = zap.NewExample(zap.Development()).Sugar()
+
+// Init 初始化 sugar
+func Init() {
+	sugar = New(config.Release)
+}
 
 func New(release string) *zap.SugaredLogger {
 	var (
@@ -48,9 +55,9 @@ func New(release string) *zap.SugaredLogger {
 func getLogWriter(filename string) zapcore.WriteSyncer {
 	hook := &lumberjack.Logger{
 		Filename:   filename,
-		MaxSize:    10,
-		MaxAge:     30,
-		MaxBackups: 5,
+		MaxSize:    viper.GetInt("lumberjack.max_size"),
+		MaxAge:     viper.GetInt("lumberjack.max_age"),
+		MaxBackups: viper.GetInt("lumberjack.max_backups"),
 		Compress:   false,
 	}
 	return zapcore.AddSync(hook)

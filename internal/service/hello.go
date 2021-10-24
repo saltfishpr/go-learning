@@ -6,40 +6,52 @@ package service
 
 import (
 	"context"
-	"io"
+	"strings"
+	"time"
 
 	v1 "learning/api/hello/v1"
 	"learning/logger"
+
+	"github.com/moby/moby/pkg/pubsub"
 )
 
-// HelloServerImpl 实现 HelloServer 服务
-type HelloServerImpl struct {
-	v1.UnimplementedHelloServer
+// PubSubServerImpl 实现 HelloServer 服务
+type PubSubServerImpl struct {
+	pub *pubsub.Publisher
+	v1.UnimplementedPubSubServer
 }
 
-// Hello 返回 "hello {{request}}"
-func (s *HelloServerImpl) Hello(_ context.Context, request *v1.String) (*v1.String, error) {
-	logger.Infof("get request: %s", request.GetValue())
-	reply := &v1.String{Value: "hello " + request.GetValue()}
-	return reply, nil
+func NewPubSubServerImpl() *PubSubServerImpl {
+	return &PubSubServerImpl{
+		pub: pubsub.NewPublisher(100*time.Millisecond, 10),
+	}
 }
 
-func (s *HelloServerImpl) Channel(stream v1.Hello_ChannelServer) error {
-	for {
-		args, err := stream.Recv()
-		if err == io.EOF {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
+func (p *PubSubServerImpl) Publish(_ context.Context, arg *v1.String) (*v1.String, error) {
+	logger.Info("get publish: ", arg.GetValue())
+	p.pub.Publish(arg.GetValue())
+	return &v1.String{}, nil
+}
 
-		logger.Infof("channel receive: %s", args.GetValue())
-		reply := &v1.String{Value: "hello " + args.GetValue()}
+func (p *PubSubServerImpl) Subscribe(
+	arg *v1.String, stream v1.PubSub_SubscribeServer,
+) error {
+	ch := p.pub.SubscribeTopic(
+		func(v interface{}) bool {
+			if key, ok := v.(string); ok {
+				if strings.HasPrefix(key, arg.GetValue()) {
+					return true
+				}
+			}
+			return false
+		},
+	)
 
-		err = stream.Send(reply)
-		if err != nil {
+	for v := range ch {
+		if err := stream.Send(&v1.String{Value: v.(string)}); err != nil {
 			return err
 		}
 	}
+
+	return nil
 }

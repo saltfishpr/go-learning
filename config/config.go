@@ -5,7 +5,7 @@
 package config
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/spf13/viper"
 )
@@ -16,12 +16,12 @@ var (
 )
 
 // Init 初始化配置
-func Init() error {
-	fmt.Println("build date: ", BuildDate)
-	fmt.Println("release: ", Release)
+func Init() {
 	viper.SetConfigName("config") // name of config file (without extension)
 	viper.SetConfigType("yml")    // REQUIRED if the config file does not have the extension in the name
 	viper.AddConfigPath("config") // optionally look for config in the working directory
 	err := viper.ReadInConfig()   // Find and read the config file
-	return err
+	if err != nil {
+		log.Fatal("init config failed: ", err)
+	}
 }
