@@ -1,3 +1,5 @@
 #!/bin/bash
-docker build --build-arg APP_NAME=$APP_NAME --no-cache --pull -f $PWD/build/Dockerfile --tag $APP_NAME:latest .
-docker run -d $APP_NAME
+echo "----- Build -----"
+docker build --pull -f "$WORKDIR"/build/Dockerfile --tag "$APP_NAME":latest .
+echo "-----  Run  -----"
+docker run --rm "$APP_NAME"

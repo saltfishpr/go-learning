@@ -1,0 +1,9 @@
+etcd:
+  timeout: 3
+  endpoints:
+    - "localhost:2379"
+
+lumberjack:
+  max_size: 10
+  max_age: 30
+  max_backups: 5
