@@ -9,6 +9,7 @@ import (
 
 	v1 "learning/api/hello/v1"
 	"learning/config"
+	"learning/internal/service"
 	"learning/logger"
 
 	"github.com/spf13/viper"
@@ -24,7 +25,11 @@ func main() {
 	defer logger.Sync()
 	logger.Info("build date:", config.BuildDate)
 
-	conn, err := grpc.Dial(viper.GetString("rpcAddr"), grpc.WithInsecure())
+	auth := service.Authentication{
+		Username: viper.GetString("auth.username"),
+		Password: viper.GetString("auth.password"),
+	}
+	conn, err := grpc.Dial(viper.GetString("rpcAddr"), grpc.WithInsecure(), grpc.WithPerRPCCredentials(auth))
 	if err != nil {
 		logger.Fatal(err)
 	}

@@ -5,3 +5,7 @@ lumberjack:
   max_size: 10
   max_age: 30
   max_backups: 5
+
+auth:
+  username: guest
+  password: 123456

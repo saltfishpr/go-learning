@@ -18,11 +18,11 @@ import (
 func init() {
 	config.Init()
 	logger.Init()
+	logger.Info("build date:", config.BuildDate)
 }
 
 func main() {
 	defer logger.Sync()
-	logger.Info("build date:", config.BuildDate)
 
 	grpcServer := grpc.NewServer()
 	v1.RegisterPubSubServer(grpcServer, service.NewPubSubServerImpl())
