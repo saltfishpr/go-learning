@@ -1,0 +1,12 @@
+kafka:
+  brokers:
+    - localhost:9092
+  consumer_group: C_test
+
+watermill:
+  topic: topic
+
+lumberjack:
+  max_size: 10
+  max_age: 30
+  max_backups: 5
