@@ -5,7 +5,7 @@ package main
 
 type Burger struct{}
 
-func (Burger) packing() Packing {
+func (Burger) Packing() Packing {
 	return new(Wrapper)
 }
 
@@ -13,11 +13,11 @@ type VegBurger struct {
 	Burger
 }
 
-func (VegBurger) name() string {
+func (VegBurger) Name() string {
 	return "Veg Burger"
 }
 
-func (VegBurger) price() int {
+func (VegBurger) Price() int {
 	return 25
 }
 
@@ -25,10 +25,10 @@ type ChickenBurger struct {
 	Burger
 }
 
-func (ChickenBurger) name() string {
+func (ChickenBurger) Name() string {
 	return "Chicken Burger"
 }
 
-func (ChickenBurger) price() int {
+func (ChickenBurger) Price() int {
 	return 40
 }

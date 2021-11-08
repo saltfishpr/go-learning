@@ -16,19 +16,19 @@ func (c ShapeCache) getShape(shapeId string) Shape {
 	if !ok {
 		return nil
 	}
-	return cachedShape.clone()
+	return cachedShape.Clone()
 }
 
 func (c *ShapeCache) loadCache() {
 	circle := NewCircle()
-	circle.setId("1")
-	c.shapeMap[circle.getId()] = circle
+	circle.SetId("1")
+	c.shapeMap[circle.GetId()] = circle
 
 	rectangle := NewRectangle()
-	rectangle.setId("2")
-	c.shapeMap[rectangle.getId()] = rectangle
+	rectangle.SetId("2")
+	c.shapeMap[rectangle.GetId()] = rectangle
 
 	square := NewSquare()
-	square.setId("3")
-	c.shapeMap[square.getId()] = square
+	square.SetId("3")
+	c.shapeMap[square.GetId()] = square
 }

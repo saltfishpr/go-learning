@@ -6,9 +6,9 @@ package main
 import "fmt"
 
 type Item interface {
-	name() string
-	packing() Packing
-	price() int
+	Name() string
+	Packing() Packing
+	Price() int
 }
 
 type Meal struct {
@@ -22,14 +22,14 @@ func (m *Meal) AddItem(item Item) {
 func (m Meal) GetCost() int {
 	var res int
 	for _, item := range m.items {
-		res += item.price()
+		res += item.Price()
 	}
 	return res
 }
 
 func (m Meal) showItems() {
 	for _, item := range m.items {
-		fmt.Printf("Item: %s, Packing: %s, Price: %d\n", item.name(), item.packing().pack(), item.price())
+		fmt.Printf("Item: %s, Packing: %s, Price: %d\n", item.Name(), item.Packing().Pack(), item.Price())
 	}
 }
 

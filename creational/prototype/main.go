@@ -10,16 +10,16 @@ func main() {
 	shapeCache.loadCache()
 
 	clonedShape1 := shapeCache.getShape("1")
-	fmt.Println("Shape: ", clonedShape1.getTp())
-	clonedShape1.draw()
+	fmt.Println("Shape: ", clonedShape1.GetTp())
+	clonedShape1.Draw()
 
 	clonedShape2 := shapeCache.getShape("2")
-	fmt.Println("Shape: ", clonedShape2.getTp())
-	clonedShape2.draw()
+	fmt.Println("Shape: ", clonedShape2.GetTp())
+	clonedShape2.Draw()
 
 	clonedShape3 := shapeCache.getShape("3")
-	fmt.Println("Shape: ", clonedShape3.getTp())
-	clonedShape3.draw()
+	fmt.Println("Shape: ", clonedShape3.GetTp())
+	clonedShape3.Draw()
 
 	clonedShape4 := shapeCache.getShape("4")
 	_ = clonedShape4 == nil

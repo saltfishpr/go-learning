@@ -5,7 +5,7 @@ package main
 
 type ColdDrink struct{}
 
-func (ColdDrink) packing() Packing {
+func (ColdDrink) Packing() Packing {
 	return new(Bottle)
 }
 
@@ -13,11 +13,11 @@ type Coke struct {
 	ColdDrink
 }
 
-func (Coke) name() string {
+func (Coke) Name() string {
 	return "Coke"
 }
 
-func (Coke) price() int {
+func (Coke) Price() int {
 	return 10
 }
 
@@ -25,10 +25,10 @@ type Pepsi struct {
 	ColdDrink
 }
 
-func (Pepsi) name() string {
+func (Pepsi) Name() string {
 	return "Pepsi"
 }
 
-func (Pepsi) price() int {
+func (Pepsi) Price() int {
 	return 15
 }

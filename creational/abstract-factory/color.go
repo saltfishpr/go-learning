@@ -6,23 +6,23 @@ package main
 import "fmt"
 
 type Color interface {
-	fill()
+	Fill()
 }
 
 type Red struct{}
 
-func (Red) fill() {
-	fmt.Println("Red fill().")
+func (Red) Fill() {
+	fmt.Println("Red Fill().")
 }
 
 type Green struct{}
 
-func (Green) fill() {
-	fmt.Println("Green fill().")
+func (Green) Fill() {
+	fmt.Println("Green Fill().")
 }
 
 type Blue struct{}
 
-func (Blue) fill() {
-	fmt.Println("Blue fill().")
+func (Blue) Fill() {
+	fmt.Println("Blue Fill().")
 }

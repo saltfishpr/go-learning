@@ -7,23 +7,23 @@ package main
 import "fmt"
 
 type Shape interface {
-	draw()
+	Draw()
 }
 
 type Circle struct{}
 
-func (Circle) draw() {
-	fmt.Println("Circle draw().")
+func (Circle) Draw() {
+	fmt.Println("Circle Draw().")
 }
 
 type Rectangle struct{}
 
-func (Rectangle) draw() {
-	fmt.Println("Rectangle draw().")
+func (Rectangle) Draw() {
+	fmt.Println("Rectangle Draw().")
 }
 
 type Square struct{}
 
-func (Square) draw() {
-	fmt.Println("Square draw().")
+func (Square) Draw() {
+	fmt.Println("Square Draw().")
 }

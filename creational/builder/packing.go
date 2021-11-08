@@ -1,20 +1,20 @@
-// @file: packing.go
+// @file: Packing.go
 // @date: 2021/10/27
 
 package main
 
 type Packing interface {
-	pack() string
+	Pack() string
 }
 
 type Wrapper struct{}
 
-func (Wrapper) pack() string {
+func (Wrapper) Pack() string {
 	return "wrapper"
 }
 
 type Bottle struct{}
 
-func (Bottle) pack() string {
+func (Bottle) Pack() string {
 	return "bottle"
 }

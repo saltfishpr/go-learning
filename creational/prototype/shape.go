@@ -6,20 +6,20 @@ package main
 import "fmt"
 
 type Cloneable interface {
-	clone() Shape
+	Clone() Shape
 }
 
 type Drawable interface {
-	draw()
+	Draw()
 }
 
 type Shape interface {
 	Cloneable
 	Drawable
 
-	getId() string
-	setId(string)
-	getTp() string
+	GetId() string
+	SetId(string)
+	GetTp() string
 }
 
 type ShapeBase struct {
@@ -27,15 +27,15 @@ type ShapeBase struct {
 	tp string
 }
 
-func (s ShapeBase) getId() string {
+func (s ShapeBase) GetId() string {
 	return s.id
 }
 
-func (s *ShapeBase) setId(id string) {
+func (s *ShapeBase) SetId(id string) {
 	s.id = id
 }
 
-func (s ShapeBase) getTp() string {
+func (s ShapeBase) GetTp() string {
 	return s.tp
 }
 
@@ -47,12 +47,12 @@ func NewCircle() *Circle {
 	return &Circle{&ShapeBase{tp: "Circle"}}
 }
 
-func (c Circle) clone() Shape {
+func (c Circle) Clone() Shape {
 	return &Circle{&ShapeBase{id: c.id, tp: c.tp}}
 }
 
-func (Circle) draw() {
-	fmt.Println("Circle draw().")
+func (Circle) Draw() {
+	fmt.Println("Circle Draw().")
 }
 
 type Rectangle struct {
@@ -63,12 +63,12 @@ func NewRectangle() *Rectangle {
 	return &Rectangle{&ShapeBase{tp: "Rectangle"}}
 }
 
-func (r Rectangle) clone() Shape {
+func (r Rectangle) Clone() Shape {
 	return &Rectangle{&ShapeBase{id: r.id, tp: r.tp}}
 }
 
-func (Rectangle) draw() {
-	fmt.Println("Rectangle draw().")
+func (Rectangle) Draw() {
+	fmt.Println("Rectangle Draw().")
 }
 
 type Square struct {
@@ -79,10 +79,10 @@ func NewSquare() *Square {
 	return &Square{&ShapeBase{tp: "Square"}}
 }
 
-func (s Square) clone() Shape {
+func (s Square) Clone() Shape {
 	return &Square{&ShapeBase{id: s.id, tp: s.tp}}
 }
 
-func (Square) draw() {
-	fmt.Println("Square draw().")
+func (Square) Draw() {
+	fmt.Println("Square Draw().")
 }
