@@ -1,17 +1,11 @@
 # It's necessary to set this because some environments don't link sh -> bash.
 SHELL := /usr/bin/env bash
 
-export GO111MODULE=on
-export GOPROXY=https://goproxy.cn,direct
-export APP_NAME=lab
-
-.PHONY: clean
-# clean cache
-clean:
-	rm -rf output
+export WORKDIR=$(shell pwd)
+export APP_NAME=learning
 
 .PHONY: build
-# build executable file
+# build executable file for dev
 build:
 	sh scripts/build.sh
 
@@ -19,6 +13,11 @@ build:
 # run executable file
 run:
 	sh output/run.sh
+
+.PHONY: clean
+# clean build cache and docker images
+clean:
+	sh scripts/clean.sh
 
 .PHONY: docker
 # build a docker image and run a container

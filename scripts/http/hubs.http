@@ -1,0 +1,16 @@
+###
+POST http://127.0.0.1:9091/api/v1/hubs
+Content-Type: application/json
+
+{
+    "id": "alpha"
+}
+
+###
+GET http://127.0.0.1:9091/api/v1/hubs
+
+###
+PUT http://127.0.0.1:9091/api/v1/hubs
+
+###
+DELETE http://127.0.0.1:9091/api/v1/hubs

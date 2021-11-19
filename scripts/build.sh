@@ -1,10 +1,9 @@
 #!/bin/bash
-VERSION=$(git --git-dir=$PWD/.git describe --tags --always)
-
 set -o errexit
 set -o nounset
 set -o pipefail
 
-mkdir -p $PWD/output/bin/ && go build -ldflags "-X main.Version=$VERSION" -o $PWD/output/bin/$APP_NAME ./...
-echo "#!/bin/bash" >$PWD/output/run.sh
-echo "${PWD}/output/bin/${APP_NAME}" >>$PWD/output/run.sh
+go mod tidy
+mkdir -p "$WORKDIR"/output/bin/ && go build -ldflags "-X 'main.BuildDate=$(date '+%F %H:%M:%S')'" -o "$WORKDIR"/output/bin/"$APP_NAME" "$APP_NAME"/cmd/server
+echo "#!/bin/bash" >"$WORKDIR"/output/run.sh
+echo "${WORKDIR}/output/bin/${APP_NAME}" >>"$WORKDIR"/output/run.sh

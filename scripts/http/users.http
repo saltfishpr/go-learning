@@ -1,0 +1,28 @@
+### 创建用户
+POST http://127.0.0.1:9091/api/v1/users
+Content-Type: application/json
+
+{
+  "account": "saltfish",
+  "password": "123456",
+  "nickname": "咸鱼硕"
+}
+
+### 查询指定用户
+GET http://127.0.0.1:9091/api/v1/users?account=saltfish
+
+### 查询所有用户
+GET http://127.0.0.1:9091/api/v1/users/all
+
+### 更新用户
+PUT http://127.0.0.1:9091/api/v1/users
+Content-Type: application/json
+
+{
+  "account": "saltfish",
+  "password": "123456",
+  "nickname": "咸鱼"
+}
+
+### 删除指定用户
+DELETE http://127.0.0.1:9091/api/v1/users?account=saltfish
