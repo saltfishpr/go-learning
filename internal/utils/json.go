@@ -1,0 +1,17 @@
+// @description: 提供json序列化与反序列化
+// @file: json.go
+// @date: 2021/11/21
+
+package utils
+
+import jsoniter "github.com/json-iterator/go"
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
+func JsonMarshalToString(data interface{}) (string, error) {
+	return json.MarshalToString(&data)
+}
+
+func JsonUnmarshal(data []byte, v interface{}) error {
+	return json.Unmarshal(data, v)
+}

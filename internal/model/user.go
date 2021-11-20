@@ -15,9 +15,6 @@ type User struct {
 	Password *string `json:"password" validate:"required"`
 	Nickname *string `json:"nickname" validate:"required"`
 	Address  *string `json:"address,omitempty"`
-
-	Hubs    []*Hub  `json:"hubs,omitempty"`
-	Friends []*User `json:"friends,omitempty"`
 }
 
 func CreateUser(user *User) error {
@@ -26,13 +23,14 @@ func CreateUser(user *User) error {
 	return data.CreateUser(userEntity)
 }
 
-func ReadAllUsers() ([]*User, error) {
-	userEntities, err := data.ReadAllUsers()
+func GetAllUsers() ([]*User, error) {
+	userEntities, err := data.GetAllUsers()
 	if err != nil {
 		return nil, err
 	}
 	users := make([]*User, len(userEntities))
 	copier.Copy(&users, &userEntities)
+
 	return users, nil
 }
 
@@ -46,13 +44,36 @@ func DeleteUserByAccount(account string) error {
 	return data.DeleteUserByAccount(account)
 }
 
-func ReadUserByAccount(account string) (*User, error) {
-	userEntity, err := data.ReadUserByAccount(account)
+func GetUserByAccount(account string) (*User, error) {
+	userEntity, err := data.GetUserByAccount(account)
 	if err != nil {
 		return nil, err
 	}
 	user := new(User)
 	copier.Copy(user, userEntity)
+
+	return user, nil
+}
+
+func JoinHub(account string, hid string) error {
+	userEntity, err := data.GetUserByAccount(account)
+	if err != nil {
+		return err
+	}
+
+	hubEntity, err := data.GetHubByHID(hid)
+	if err != nil {
+		return err
+	}
+
+	return data.JoinHub(userEntity, hubEntity)
+}
+
+func GetJoinedHubs(account string) ([]*Hub, error) {
+	userEntity, err := data.GetUserByAccount(account)
+	if err != nil {
+		return nil, err
+	}
 
 	hubEntities, err := data.GetJoinedHubs(userEntity)
 	if err != nil {
@@ -60,6 +81,64 @@ func ReadUserByAccount(account string) (*User, error) {
 	}
 	hubs := make([]*Hub, len(hubEntities))
 	copier.Copy(&hubs, &hubEntities)
-	user.Hubs = hubs
-	return user, nil
+
+	return hubs, nil
+}
+
+func LeaveHub(account string, hid string) error {
+	userEntity, err := data.GetUserByAccount(account)
+	if err != nil {
+		return err
+	}
+
+	hubEntity, err := data.GetHubByHID(hid)
+	if err != nil {
+		return err
+	}
+
+	return data.LeaveHub(userEntity, hubEntity)
+}
+
+func FollowUser(account string, friendAccount string) error {
+	userEntity, err := data.GetUserByAccount(account)
+	if err != nil {
+		return err
+	}
+
+	friendEntity, err := data.GetUserByAccount(friendAccount)
+	if err != nil {
+		return err
+	}
+
+	return data.FollowUser(userEntity, friendEntity)
+}
+
+func GetFollowingUsers(account string) ([]*User, error) {
+	userEntity, err := data.GetUserByAccount(account)
+	if err != nil {
+		return nil, err
+	}
+
+	friendEntities, err := data.GetFollowingUsers(userEntity)
+	if err != nil {
+		return nil, err
+	}
+	friends := make([]*User, len(friendEntities))
+	copier.Copy(&friends, &friendEntities)
+
+	return friends, nil
+}
+
+func UnfollowUser(account string, friendAccount string) error {
+	userEntity, err := data.GetUserByAccount(account)
+	if err != nil {
+		return err
+	}
+
+	friendEntity, err := data.GetUserByAccount(friendAccount)
+	if err != nil {
+		return err
+	}
+
+	return data.UnfollowUser(userEntity, friendEntity)
 }

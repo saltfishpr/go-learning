@@ -6,7 +6,7 @@ Content-Type: application/x-www-form-urlencoded
 account=saltfish&password=123456
 
 ### 创建聊天室
-POST http://127.0.0.1:9091/api/v1/hubs
+POST http://127.0.0.1:9091/api/v1/h
 Authorization: Bearer {{login.response.body.token}}
 Content-Type: application/json
 
@@ -17,11 +17,11 @@ Content-Type: application/json
 }
 
 ### 查询所有聊天室
-GET http://127.0.0.1:9091/api/v1/hubs
+GET http://127.0.0.1:9091/api/v1/h
 Authorization: Bearer {{login.response.body.token}}
 
 ### 更新聊天室
-PUT http://127.0.0.1:9091/api/v1/hubs
+PUT http://127.0.0.1:9091/api/v1/h
 Authorization: Bearer {{login.response.body.token}}
 Content-Type: application/json
 
@@ -32,17 +32,9 @@ Content-Type: application/json
 }
 
 ### 删除聊天室
-DELETE http://127.0.0.1:9091/api/v1/hubs?hid=alpha
-Authorization: Bearer {{login.response.body.token}}
-
-### 用户加入聊天室
-POST http://127.0.0.1:9091/api/v1/hubs/alpha
+DELETE http://127.0.0.1:9091/api/v1/h?hid=alpha
 Authorization: Bearer {{login.response.body.token}}
 
 ### 获取指定聊天室信息
-GET http://127.0.0.1:9091/api/v1/hubs/alpha
-Authorization: Bearer {{login.response.body.token}}
-
-### 用户离开聊天室
-DELETE http://127.0.0.1:9091/api/v1/hubs/alpha
+GET http://127.0.0.1:9091/api/v1/h/alpha
 Authorization: Bearer {{login.response.body.token}}

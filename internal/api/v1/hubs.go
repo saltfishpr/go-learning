@@ -11,7 +11,6 @@ import (
 	"github.com/gofiber/websocket/v2"
 
 	"learning/internal/model"
-	"learning/internal/utils"
 	"learning/logger"
 )
 
@@ -32,9 +31,9 @@ func CreateHub(c *fiber.Ctx) error {
 }
 
 func GetAllHubs(c *fiber.Ctx) error {
-	hubs, err := model.ReadAllHubs()
+	hubs, err := model.GetAllHubs()
 	if err != nil {
-		logger.Error("read hubs error: ", err)
+		logger.Error("get hubs error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
 	}
 
@@ -75,49 +74,19 @@ func DeleteHub(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
-func JoinHub(c *fiber.Ctx) error {
-	hid := c.Params("hid")
-	if len(hid) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "缺少聊天室ID"})
-	}
-
-	account := utils.GetUserAccountFromCtx(c)
-	err := model.JoinHub(account, hid)
-	if err != nil {
-		logger.Errorf("user %s join hub %s error: %s", account, hid, err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
-	}
-	return c.SendStatus(fiber.StatusOK)
-}
-
 func GetHubInfo(c *fiber.Ctx) error {
 	hid := c.Params("hid")
 	if len(hid) == 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "缺少聊天室ID"})
 	}
 
-	hub, err := model.ReadHubByHID(hid)
+	hub, err := model.GetHubByHID(hid)
 	if err != nil {
-		logger.Error("read hub error: ", err)
+		logger.Error("get hub error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(hub)
-}
-
-func LeaveHub(c *fiber.Ctx) error {
-	hid := c.Params("hid")
-	if len(hid) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "缺少聊天室ID"})
-	}
-
-	account := utils.GetUserAccountFromCtx(c)
-	err := model.LeaveHub(account, hid)
-	if err != nil {
-		logger.Errorf("user %s leave hub %s error: %s", account, hid, err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
-	}
-	return c.SendStatus(fiber.StatusOK)
 }
 
 func HubHandler(c *websocket.Conn) {

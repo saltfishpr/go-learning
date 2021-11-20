@@ -14,8 +14,6 @@ type Hub struct {
 	HID  *string `json:"hid" validate:"required"`
 	Name *string `json:"name" validate:"required"`
 	Size *int    `json:"size" validate:"required"`
-
-	Users []*User `json:"users,omitempty"`
 }
 
 func CreateHub(hub *Hub) error {
@@ -24,8 +22,8 @@ func CreateHub(hub *Hub) error {
 	return data.CreateHub(hubEntity)
 }
 
-func ReadAllHubs() ([]*Hub, error) {
-	hubEntities, err := data.ReadAllHubs()
+func GetAllHubs() ([]*Hub, error) {
+	hubEntities, err := data.GetAllHubs()
 	if err != nil {
 		return nil, err
 	}
@@ -44,40 +42,13 @@ func DeleteHubByHID(hid string) error {
 	return data.DeleteHubByHID(hid)
 }
 
-func JoinHub(account string, hid string) error {
-	userEntity, err := data.ReadUserByAccount(account)
-	if err != nil {
-		return err
-	}
-
-	hubEntity, err := data.ReadHubByHID(hid)
-	if err != nil {
-		return err
-	}
-
-	return data.JoinHub(userEntity, hubEntity)
-}
-
-func ReadHubByHID(hid string) (*Hub, error) {
-	hubEntity, err := data.ReadHubByHID(hid)
+func GetHubByHID(hid string) (*Hub, error) {
+	hubEntity, err := data.GetHubByHID(hid)
 	if err != nil {
 		return nil, err
 	}
 	hub := new(Hub)
 	copier.Copy(hub, hubEntity)
+
 	return hub, nil
-}
-
-func LeaveHub(account string, hid string) error {
-	userEntity, err := data.ReadUserByAccount(account)
-	if err != nil {
-		return err
-	}
-
-	hubEntity, err := data.ReadHubByHID(hid)
-	if err != nil {
-		return err
-	}
-
-	return data.LeaveHub(userEntity, hubEntity)
 }

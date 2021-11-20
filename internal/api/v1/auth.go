@@ -35,7 +35,7 @@ func Login(c *fiber.Ctx) error {
 	account := c.FormValue("account")
 	password := c.FormValue("password")
 
-	user, err := model.ReadUserByAccount(account)
+	user, err := model.GetUserByAccount(account)
 	if err != nil || *(user.Password) != password {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "用户名或密码错误"})
 	}

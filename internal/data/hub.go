@@ -33,7 +33,7 @@ func CreateHub(hub *Hub) error {
 	return nil
 }
 
-func ReadAllHubs() ([]*Hub, error) {
+func GetAllHubs() ([]*Hub, error) {
 	var hubs []*Hub
 
 	db := NewPostgres()
@@ -62,7 +62,7 @@ func DeleteHubByHID(hid string) error {
 	return nil
 }
 
-func ReadHubByHID(hid string) (*Hub, error) {
+func GetHubByHID(hid string) (*Hub, error) {
 	hub := new(Hub)
 
 	db := NewPostgres()
@@ -73,22 +73,12 @@ func ReadHubByHID(hid string) (*Hub, error) {
 	return hub, nil
 }
 
-func JoinHub(user *User, hub *Hub) error {
+func GetUsersInHub(hub *Hub) ([]*User, error) {
+	var users []*User
 	db := NewPostgres()
-	return db.Model(user).Association("Hubs").Append(hub)
-}
-
-func GetJoinedHubs(user *User) ([]*Hub, error) {
-	var hubs []*Hub
-	db := NewPostgres()
-	err := db.Model(&user).Association("Hubs").Find(&hubs)
+	err := db.Model(&hub).Association("Users").Find(&users)
 	if err != nil {
 		return nil, err
 	}
-	return hubs, nil
-}
-
-func LeaveHub(user *User, hub *Hub) error {
-	db := NewPostgres()
-	return db.Model(user).Association("Hubs").Delete(hub)
+	return users, nil
 }

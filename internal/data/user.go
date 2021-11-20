@@ -35,7 +35,7 @@ func CreateUser(user *User) error {
 	return nil
 }
 
-func ReadAllUsers() ([]*User, error) {
+func GetAllUsers() ([]*User, error) {
 	var users []*User
 
 	db := NewPostgres()
@@ -64,7 +64,7 @@ func DeleteUserByAccount(account string) error {
 	return nil
 }
 
-func ReadUserByAccount(account string) (*User, error) {
+func GetUserByAccount(account string) (*User, error) {
 	user := new(User)
 
 	db := NewPostgres()
@@ -73,4 +73,44 @@ func ReadUserByAccount(account string) (*User, error) {
 		return nil, res.Error
 	}
 	return user, nil
+}
+
+func JoinHub(user *User, hub *Hub) error {
+	db := NewPostgres()
+	return db.Model(user).Association("Hubs").Append(hub)
+}
+
+func GetJoinedHubs(user *User) ([]*Hub, error) {
+	var hubs []*Hub
+	db := NewPostgres()
+	err := db.Model(&user).Association("Hubs").Find(&hubs)
+	if err != nil {
+		return nil, err
+	}
+	return hubs, nil
+}
+
+func LeaveHub(user *User, hub *Hub) error {
+	db := NewPostgres()
+	return db.Model(user).Association("Hubs").Delete(hub)
+}
+
+func FollowUser(user *User, friend *User) error {
+	db := NewPostgres()
+	return db.Model(user).Association("Friends").Append(friend)
+}
+
+func GetFollowingUsers(user *User) ([]*User, error) {
+	var friends []*User
+	db := NewPostgres()
+	err := db.Model(&user).Association("Friends").Find(&friends)
+	if err != nil {
+		return nil, err
+	}
+	return friends, nil
+}
+
+func UnfollowUser(user *User, friend *User) error {
+	db := NewPostgres()
+	return db.Model(user).Association("Friends").Delete(friend)
 }
