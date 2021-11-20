@@ -1,5 +1,12 @@
-### 创建用户
-POST http://127.0.0.1:9091/api/v1/users
+### 登录
+# @name login
+POST http://127.0.0.1:9091/api/v1/login
+Content-Type: application/x-www-form-urlencoded
+
+account=saltfish&password=123456
+
+### 注册用户
+POST http://127.0.0.1:9091/api/v1/register
 Content-Type: application/json
 
 {
@@ -8,14 +15,13 @@ Content-Type: application/json
   "nickname": "咸鱼硕"
 }
 
-### 查询指定用户
-GET http://127.0.0.1:9091/api/v1/users?account=saltfish
-
 ### 查询所有用户
-GET http://127.0.0.1:9091/api/v1/users/all
+GET http://127.0.0.1:9091/api/v1/users
+Authorization: Bearer {{login.response.body.token}}
 
 ### 更新用户
 PUT http://127.0.0.1:9091/api/v1/users
+Authorization: Bearer {{login.response.body.token}}
 Content-Type: application/json
 
 {
@@ -24,5 +30,10 @@ Content-Type: application/json
   "nickname": "咸鱼"
 }
 
-### 删除指定用户
+### 删除用户
 DELETE http://127.0.0.1:9091/api/v1/users?account=saltfish
+Authorization: Bearer {{login.response.body.token}}
+
+### 获取指定用户信息
+GET http://127.0.0.1:9091/api/v1/users/saltfish
+Authorization: Bearer {{login.response.body.token}}

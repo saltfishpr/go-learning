@@ -5,73 +5,79 @@
 package model
 
 import (
-	"learning/config"
-	"learning/logger"
+	"github.com/jinzhu/copier"
 
-	"github.com/gofiber/websocket/v2"
+	"learning/internal/data"
 )
 
 type Hub struct {
-	ID   string
-	Size string
+	HID  *string `json:"hid" validate:"required"`
+	Name *string `json:"name" validate:"required"`
+	Size *int    `json:"size" validate:"required"`
 
-	clients    map[*websocket.Conn]Client
-	register   chan *websocket.Conn
-	unregister chan *websocket.Conn
-	broadcast  chan []byte
+	Users []*User `json:"users,omitempty"`
 }
 
-func NewHub(id string) *Hub {
-	return &Hub{
-		ID: id,
+func CreateHub(hub *Hub) error {
+	hubEntity := new(data.Hub)
+	copier.Copy(hubEntity, hub)
+	return data.CreateHub(hubEntity)
+}
 
-		clients:    make(map[*websocket.Conn]Client),
-		register:   make(chan *websocket.Conn, config.BufferedChan),
-		unregister: make(chan *websocket.Conn, config.BufferedChan),
-		broadcast:  make(chan []byte),
+func ReadAllHubs() ([]*Hub, error) {
+	hubEntities, err := data.ReadAllHubs()
+	if err != nil {
+		return nil, err
 	}
+	hubs := make([]*Hub, len(hubEntities))
+	copier.Copy(&hubs, &hubEntities)
+	return hubs, nil
 }
 
-func (h *Hub) Run() {
-	for {
-		select {
-		case message := <-h.broadcast:
-			logger.Infof("[%s] message received: %s", h.ID, string(message))
-			for connection := range h.clients {
-				if err := connection.WriteMessage(websocket.TextMessage, message); err != nil {
-					logger.Error("write error:", err)
-					connection.WriteMessage(websocket.CloseMessage, []byte{})
-					connection.Close()
-					delete(h.clients, connection)
-				}
-			}
+func UpdateHub(hub *Hub) error {
+	hubEntity := new(data.Hub)
+	copier.Copy(hubEntity, hub)
+	return data.UpdateHub(hubEntity)
+}
 
-		case connection := <-h.register:
-			h.clients[connection] = Client{}
-			logger.Infof("[%s] connection registered", h.ID)
+func DeleteHubByHID(hid string) error {
+	return data.DeleteHubByHID(hid)
+}
 
-		case connection := <-h.unregister:
-			delete(h.clients, connection)
-			logger.Infof("[%s] connection unregistered", h.ID)
-		}
+func JoinHub(account string, hid string) error {
+	userEntity, err := data.ReadUserByAccount(account)
+	if err != nil {
+		return err
 	}
-}
 
-func (h *Hub) Register(c *websocket.Conn) {
-	h.register <- c
-}
-
-func (h *Hub) Unregister(c *websocket.Conn) {
-	h.unregister <- c
-	c.Close()
-}
-
-func (h *Hub) Broadcast(payload []byte) {
-	h.broadcast <- payload
-}
-
-func (h *Hub) Close() {
-	for c := range h.clients {
-		h.Unregister(c)
+	hubEntity, err := data.ReadHubByHID(hid)
+	if err != nil {
+		return err
 	}
+
+	return data.JoinHub(userEntity, hubEntity)
+}
+
+func ReadHubByHID(hid string) (*Hub, error) {
+	hubEntity, err := data.ReadHubByHID(hid)
+	if err != nil {
+		return nil, err
+	}
+	hub := new(Hub)
+	copier.Copy(hub, hubEntity)
+	return hub, nil
+}
+
+func LeaveHub(account string, hid string) error {
+	userEntity, err := data.ReadUserByAccount(account)
+	if err != nil {
+		return err
+	}
+
+	hubEntity, err := data.ReadHubByHID(hid)
+	if err != nil {
+		return err
+	}
+
+	return data.LeaveHub(userEntity, hubEntity)
 }

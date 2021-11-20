@@ -3,6 +3,8 @@
 
 package config
 
+import "time"
+
 const BufferedChan = 1
 
 const (
@@ -23,4 +25,11 @@ const (
 	MagentaBold = "\033[35;1m"
 	RedBold     = "\033[31;1m"
 	YellowBold  = "\033[33;1m"
+)
+
+const (
+	TokenExpireTime = 15 * time.Minute
+	SigningKey      = "saltfish"
+	ContextKey      = "user"
+	AuthScheme      = "Bearer"
 )

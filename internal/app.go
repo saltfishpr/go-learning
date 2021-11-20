@@ -6,13 +6,13 @@ package internal
 import (
 	"time"
 
-	"learning/config"
-	"learning/internal/api/v1/hubs"
-	"learning/internal/api/v1/users"
-	"learning/logger"
-
 	"github.com/gofiber/fiber/v2"
+	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/gofiber/websocket/v2"
+
+	"learning/config"
+	v1 "learning/internal/api/v1"
+	"learning/logger"
 )
 
 func NewApp() *fiber.App {
@@ -27,26 +27,37 @@ func NewApp() *fiber.App {
 		return c.Next()
 	})
 
-	api := app.Group("/api")
-
-	hubsV1 := api.Group("/v1/hubs")
+	apiV1 := app.Group("/api/v1")
 	{
-		hubsV1.Post("", hubs.Create)
-		hubsV1.Get("", hubs.Read)
-		hubsV1.Put("", hubs.Update)
-		hubsV1.Delete("", hubs.Delete)
+		apiV1.Post("/register", v1.Register)
+		apiV1.Post("/login", v1.Login)
 	}
 
-	usersV1 := api.Group("/v1/users")
+	apiV1.Use(jwtware.New(jwtware.Config{
+		AuthScheme: config.AuthScheme,
+		ContextKey: config.ContextKey,
+		SigningKey: []byte(config.SigningKey),
+	}))
+
 	{
-		usersV1.Post("", users.Create)
-		usersV1.Get("", users.Read)
-		usersV1.Get("/all", users.ReadAll)
-		usersV1.Put("", users.Update)
-		usersV1.Delete("", users.Delete)
+		apiV1.Post("/hubs", v1.CreateHub)
+		apiV1.Get("/hubs", v1.GetAllHubs)
+		apiV1.Put("/hubs", v1.UpdateHub)
+		apiV1.Delete("/hubs", v1.DeleteHub)
+
+		apiV1.Post("/hubs/:hid", v1.JoinHub)
+		apiV1.Get("/hubs/:hid", v1.GetHubInfo)
+		apiV1.Delete("/hubs/:hid", v1.LeaveHub)
+	}
+
+	{
+		apiV1.Get("/users", v1.GetAllUsers)
+		apiV1.Put("/users", v1.UpdateUser)
+		apiV1.Delete("/users", v1.DeleteUser)
+		apiV1.Get("/users/:account", v1.GetUserInfo)
 	}
 
 	ws := app.Group("/ws")
-	ws.Get("/:hubs", hubs.EnterHubHandler, websocket.New(hubs.HubHandler))
+	ws.Get("/:hub", websocket.New(v1.HubHandler))
 	return app
 }

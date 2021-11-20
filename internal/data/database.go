@@ -1,19 +1,19 @@
-// @description:
-// @file: data.go
+// @description: 提供数据库连接
+// @file: database.go
 // @date: 2021/11/18
 
-// Package data 提供数据访问
+// Package data 提供数据库连接与数据存取操作
 package data
 
 import (
 	"sync"
 
-	"learning/logger"
-
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
+
+	"learning/logger"
 )
 
 var (
@@ -38,7 +38,7 @@ func NewPostgres() *gorm.DB {
 	once.Do(func() {
 		dsn := "host=localhost user=guest password=123456 dbname=chat port=5432 sslmode=disable TimeZone=Asia/Shanghai"
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-			Logger: gormLogger.Discard,
+			Logger: gormLogger.Default,
 		})
 		if err != nil {
 			logger.Fatal("connect postgras database error: ", err)
