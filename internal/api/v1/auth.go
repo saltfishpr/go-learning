@@ -12,6 +12,7 @@ import (
 
 	"learning/config"
 	"learning/internal/model"
+	"learning/internal/service"
 	"learning/logger"
 )
 
@@ -22,7 +23,7 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "数据错误"})
 	}
 
-	err := model.CreateUser(user)
+	err := service.CreateUser(user)
 	if err != nil {
 		logger.Error("create user error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
@@ -35,7 +36,7 @@ func Login(c *fiber.Ctx) error {
 	account := c.FormValue("account")
 	password := c.FormValue("password")
 
-	user, err := model.GetUserByAccount(account)
+	user, err := service.GetUserByAccount(account)
 	if err != nil || *(user.Password) != password {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "用户名或密码错误"})
 	}
@@ -54,4 +55,8 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"token": t, "expire_at": expireAt})
+}
+
+func Logout(c *fiber.Ctx) error {
+	return c.SendStatus(fiber.StatusOK)
 }

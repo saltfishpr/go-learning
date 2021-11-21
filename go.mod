@@ -10,6 +10,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/jinzhu/copier v0.3.2
 	github.com/json-iterator/go v1.1.12
+	github.com/orcaman/concurrent-map v0.0.0-20210501183033-44dafcb38ecc
 	github.com/spf13/viper v1.9.0
 	go.uber.org/zap v1.19.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0

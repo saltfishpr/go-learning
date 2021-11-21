@@ -1,4 +1,4 @@
-// @description: 处理用户的增删改查操作
+// @description: 处理 users 接口相关的 http 请求
 // @file: users.go
 // @date: 2021/11/21
 
@@ -8,12 +8,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"learning/internal/model"
+	"learning/internal/service"
 	"learning/internal/utils"
 	"learning/logger"
 )
 
 func GetAllUsers(c *fiber.Ctx) error {
-	users, err := model.GetAllUsers()
+	users, err := service.GetAllUsers()
 	if err != nil {
 		logger.Error("get users error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
@@ -32,7 +33,7 @@ func UpdateUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "缺少用户ID"})
 	}
 
-	err := model.UpdateUser(user)
+	err := service.UpdateUser(user)
 	if err != nil {
 		logger.Error("update user error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
@@ -47,7 +48,7 @@ func DeleteUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "缺少用户ID"})
 	}
 
-	err := model.DeleteUserByAccount(account)
+	err := service.DeleteUserByAccount(account)
 	if err != nil {
 		logger.Error("delete user error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
@@ -62,7 +63,7 @@ func GetUserInfo(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "缺少用户ID"})
 	}
 
-	user, err := model.GetUserByAccount(account)
+	user, err := service.GetUserByAccount(account)
 	if err != nil {
 		logger.Error("get user error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "没有此用户"})
@@ -78,7 +79,7 @@ func Join(c *fiber.Ctx) error {
 	}
 
 	account := utils.GetUserAccountFromCtx(c)
-	err := model.JoinHub(account, hid)
+	err := service.JoinHub(account, hid)
 	if err != nil {
 		logger.Errorf("user %s join hub %s error: %s", account, hid, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
@@ -88,7 +89,7 @@ func Join(c *fiber.Ctx) error {
 
 func Joined(c *fiber.Ctx) error {
 	account := utils.GetUserAccountFromCtx(c)
-	hubs, err := model.GetJoinedHubs(account)
+	hubs, err := service.GetJoinedHubs(account)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
 	}
@@ -102,7 +103,7 @@ func Leave(c *fiber.Ctx) error {
 	}
 
 	account := utils.GetUserAccountFromCtx(c)
-	err := model.LeaveHub(account, hid)
+	err := service.LeaveHub(account, hid)
 	if err != nil {
 		logger.Errorf("user %s leave hub %s error: %s", account, hid, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
@@ -117,7 +118,7 @@ func Follow(c *fiber.Ctx) error {
 	}
 
 	account := utils.GetUserAccountFromCtx(c)
-	err := model.FollowUser(account, friendAccount)
+	err := service.FollowUser(account, friendAccount)
 	if err != nil {
 		logger.Errorf("user %s follow friend %s error: %s", account, friendAccount, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
@@ -127,7 +128,7 @@ func Follow(c *fiber.Ctx) error {
 
 func Following(c *fiber.Ctx) error {
 	account := utils.GetUserAccountFromCtx(c)
-	friends, err := model.GetFollowingUsers(account)
+	friends, err := service.GetFollowingUsers(account)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
 	}
@@ -141,7 +142,7 @@ func Unfollow(c *fiber.Ctx) error {
 	}
 
 	account := utils.GetUserAccountFromCtx(c)
-	err := model.UnfollowUser(account, friendAccount)
+	err := service.UnfollowUser(account, friendAccount)
 	if err != nil {
 		logger.Errorf("user %s unfollow friend %s error: %s", account, friendAccount, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})

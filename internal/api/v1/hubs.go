@@ -8,9 +8,9 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/websocket/v2"
 
 	"learning/internal/model"
+	"learning/internal/service"
 	"learning/logger"
 )
 
@@ -21,7 +21,7 @@ func CreateHub(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "数据错误"})
 	}
 
-	err := model.CreateHub(hub)
+	err := service.CreateHub(hub)
 	if err != nil {
 		logger.Error("create hub error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
@@ -31,7 +31,7 @@ func CreateHub(c *fiber.Ctx) error {
 }
 
 func GetAllHubs(c *fiber.Ctx) error {
-	hubs, err := model.GetAllHubs()
+	hubs, err := service.GetAllHubs()
 	if err != nil {
 		logger.Error("get hubs error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
@@ -50,7 +50,7 @@ func UpdateHub(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "缺少聊天室ID"})
 	}
 
-	err := model.UpdateHub(hub)
+	err := service.UpdateHub(hub)
 	if err != nil {
 		logger.Error("update hub error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
@@ -65,7 +65,7 @@ func DeleteHub(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "缺少聊天室ID"})
 	}
 
-	err := model.DeleteUserByAccount(hid)
+	err := service.DeleteUserByAccount(hid)
 	if err != nil {
 		logger.Error("delete hub error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
@@ -80,15 +80,11 @@ func GetHubInfo(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "缺少聊天室ID"})
 	}
 
-	hub, err := model.GetHubByHID(hid)
+	hub, err := service.GetHubByHID(hid)
 	if err != nil {
 		logger.Error("get hub error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(hub)
-}
-
-func HubHandler(c *websocket.Conn) {
-
 }

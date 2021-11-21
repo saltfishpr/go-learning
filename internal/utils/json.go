@@ -1,4 +1,4 @@
-// @description: 提供json序列化与反序列化
+// @description: json序列化与反序列化
 // @file: json.go
 // @date: 2021/11/21
 
