@@ -4,7 +4,12 @@
 
 package model
 
-type Message struct {
-	Mode    *ChatMode `json:"mode" validate:"required"`    // 对象 0:user 1:hub
+type RecvMessage struct {
+	Mode    *ChatMode `json:"mode" validate:"required"`    // 对象类型 0:user 1:hub
+	ID      *string   `json:"id" validate:"required"`      // 对象ID
 	Content *string   `json:"content" validate:"required"` // 消息内容
+}
+
+type SendMessage struct {
+	Content string
 }

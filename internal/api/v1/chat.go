@@ -5,6 +5,7 @@
 package v1
 
 import (
+	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 
 	"learning/internal/service"
@@ -28,8 +29,13 @@ func ChatHandler(c *websocket.Conn) {
 
 		switch messageType {
 		case websocket.TextMessage:
-			service.ProcessMessage(message)
+			err := service.ProcessMessage(account, message)
+			if err != nil {
+				logger.Error("process message error: ", err)
+				c.WriteJSON(fiber.Map{"message": err})
+			}
 		case websocket.PingMessage:
+			c.WriteMessage(websocket.PongMessage, []byte{})
 		case websocket.PongMessage:
 		default:
 			logger.Info("websocket message received of type: ", messageType)

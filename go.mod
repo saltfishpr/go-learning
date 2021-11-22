@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/gofiber/fiber/v2 v2.22.0
 	github.com/gofiber/jwt/v3 v3.2.1
-	github.com/gofiber/websocket/v2 v2.0.12
+	github.com/gofiber/websocket/v2 v2.0.13
 	github.com/golang-jwt/jwt/v4 v4.1.0
 	github.com/google/uuid v1.3.0
 	github.com/jinzhu/copier v0.3.2
@@ -39,7 +39,7 @@ require (
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mattn/go-sqlite3 v1.14.9 // indirect
 	github.com/mitchellh/mapstructure v1.4.2 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/savsgio/gotils v0.0.0-20210921075833-21a6215cb0e4 // indirect

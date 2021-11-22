@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	db := NewPostgres()
+	_ = NewPostgres()
 	db.AutoMigrate(&User{})
 }
 
@@ -27,7 +27,6 @@ type User struct {
 }
 
 func CreateUser(user *User) error {
-	db := NewPostgres()
 	res := db.Create(user)
 	if res.Error != nil {
 		return res.Error
@@ -38,7 +37,6 @@ func CreateUser(user *User) error {
 func GetAllUsers() ([]*User, error) {
 	var users []*User
 
-	db := NewPostgres()
 	res := db.Find(&users)
 	if res.Error != nil {
 		return nil, res.Error
@@ -47,7 +45,6 @@ func GetAllUsers() ([]*User, error) {
 }
 
 func UpdateUser(user *User) error {
-	db := NewPostgres()
 	res := db.Model(user).Where("account = ?", user.Account).Updates(user)
 	if res.Error != nil {
 		return res.Error
@@ -56,7 +53,6 @@ func UpdateUser(user *User) error {
 }
 
 func DeleteUserByAccount(account string) error {
-	db := NewPostgres()
 	res := db.Where("account = ?", account).Delete(&User{})
 	if res.Error != nil {
 		return res.Error
@@ -67,7 +63,6 @@ func DeleteUserByAccount(account string) error {
 func GetUserByAccount(account string) (*User, error) {
 	user := new(User)
 
-	db := NewPostgres()
 	res := db.Where("account = ?", account).First(user)
 	if res.Error != nil {
 		return nil, res.Error
@@ -76,13 +71,11 @@ func GetUserByAccount(account string) (*User, error) {
 }
 
 func JoinHub(user *User, hub *Hub) error {
-	db := NewPostgres()
 	return db.Model(user).Association("Hubs").Append(hub)
 }
 
 func GetJoinedHubs(user *User) ([]*Hub, error) {
 	var hubs []*Hub
-	db := NewPostgres()
 	err := db.Model(&user).Association("Hubs").Find(&hubs)
 	if err != nil {
 		return nil, err
@@ -91,18 +84,15 @@ func GetJoinedHubs(user *User) ([]*Hub, error) {
 }
 
 func LeaveHub(user *User, hub *Hub) error {
-	db := NewPostgres()
 	return db.Model(user).Association("Hubs").Delete(hub)
 }
 
 func FollowUser(user *User, friend *User) error {
-	db := NewPostgres()
 	return db.Model(user).Association("Friends").Append(friend)
 }
 
 func GetFollowingUsers(user *User) ([]*User, error) {
 	var friends []*User
-	db := NewPostgres()
 	err := db.Model(&user).Association("Friends").Find(&friends)
 	if err != nil {
 		return nil, err
@@ -111,6 +101,5 @@ func GetFollowingUsers(user *User) ([]*User, error) {
 }
 
 func UnfollowUser(user *User, friend *User) error {
-	db := NewPostgres()
 	return db.Model(user).Association("Friends").Delete(friend)
 }

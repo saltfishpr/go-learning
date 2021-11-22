@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	db := NewPostgres()
+	_ = NewPostgres()
 	db.AutoMigrate(&Hub{})
 }
 
@@ -25,7 +25,6 @@ type Hub struct {
 }
 
 func CreateHub(hub *Hub) error {
-	db := NewPostgres()
 	res := db.Create(hub)
 	if res.Error != nil {
 		return res.Error
@@ -36,7 +35,6 @@ func CreateHub(hub *Hub) error {
 func GetAllHubs() ([]*Hub, error) {
 	var hubs []*Hub
 
-	db := NewPostgres()
 	res := db.Find(&hubs)
 	if res.Error != nil {
 		return nil, res.Error
@@ -45,7 +43,6 @@ func GetAllHubs() ([]*Hub, error) {
 }
 
 func UpdateHub(hub *Hub) error {
-	db := NewPostgres()
 	res := db.Model(hub).Where("h_id = ?", hub.HID).Updates(hub)
 	if res.Error != nil {
 		return res.Error
@@ -54,7 +51,6 @@ func UpdateHub(hub *Hub) error {
 }
 
 func DeleteHubByHID(hid string) error {
-	db := NewPostgres()
 	res := db.Where("h_id = ?", hid).Delete(&Hub{})
 	if res.Error != nil {
 		return res.Error
@@ -65,7 +61,6 @@ func DeleteHubByHID(hid string) error {
 func GetHubByHID(hid string) (*Hub, error) {
 	hub := new(Hub)
 
-	db := NewPostgres()
 	res := db.Where("h_id = ?", hid).First(hub)
 	if res.Error != nil {
 		return nil, res.Error
@@ -75,10 +70,18 @@ func GetHubByHID(hid string) (*Hub, error) {
 
 func GetUsersInHub(hub *Hub) ([]*User, error) {
 	var users []*User
-	db := NewPostgres()
 	err := db.Model(&hub).Association("Users").Find(&users)
 	if err != nil {
 		return nil, err
 	}
 	return users, nil
+}
+
+func IsInHub(hub *Hub, user *User) (bool, error) {
+	var res = new(User)
+	err := db.Model(&hub).Where("user_id = ?", user.ID).Association("Users").Find(&res)
+	if err != nil {
+		return false, err
+	}
+	return res != nil, nil
 }

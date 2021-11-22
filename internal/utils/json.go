@@ -8,8 +8,8 @@ import jsoniter "github.com/json-iterator/go"
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-func JsonMarshalToString(data interface{}) (string, error) {
-	return json.MarshalToString(&data)
+func JsonMarshal(data interface{}) ([]byte, error) {
+	return json.Marshal(&data)
 }
 
 func JsonUnmarshal(data []byte, v interface{}) error {

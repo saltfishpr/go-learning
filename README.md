@@ -1,10 +1,12 @@
-# chatroom
+# chat app backend
 
-Build a chat room.
+Build a chat app.
 
 ## TODO:
 
--   basic chat
--   send images
--   send files
--   use markdown
+-   [x] user crud
+-   [x] hub crud
+-   [x] basic chat
+-   [ ] send images
+-   [ ] send files
+-   [ ] use markdown
