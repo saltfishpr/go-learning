@@ -10,7 +10,7 @@ import (
 
 func init() {
 	_ = NewPostgres()
-	db.AutoMigrate(&User{})
+	_ = db.AutoMigrate(&User{})
 }
 
 type User struct {
@@ -19,7 +19,9 @@ type User struct {
 
 	Account  *string `gorm:"size:32;not null;uniqueIndex:user_udx_delete"`
 	Password *string `gorm:"size:32;not null"`
-	Nickname *string `gorm:"size:64;not null"`
+	Phone    *string `gorm:"size:32"`
+	Email    *string `gorm:"size:32"`
+	Nickname *string `gorm:"size:32;not null"`
 	Address  *string `gorm:"size:128"`
 
 	Hubs    []*Hub  `gorm:"many2many:user_hub"`

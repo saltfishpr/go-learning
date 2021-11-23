@@ -7,11 +7,11 @@ package v1
 import (
 	"net/http"
 
-	"github.com/gofiber/fiber/v2"
-
 	"learning/internal/model"
 	"learning/internal/service"
 	"learning/logger"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func CreateHub(c *fiber.Ctx) error {

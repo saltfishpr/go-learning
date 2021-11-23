@@ -8,12 +8,12 @@ package data
 import (
 	"sync"
 
+	"learning/logger"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
-
-	"learning/logger"
 )
 
 var (
@@ -23,26 +23,34 @@ var (
 )
 
 func NewSqlite() *gorm.DB {
-	once.Do(func() {
-		db, err = gorm.Open(sqlite.Open("output/gorm.db"), &gorm.Config{
-			Logger: gormLogger.Discard,
-		})
-		if err != nil {
-			logger.Fatal("connect sqlite database error: ", err)
-		}
-	})
+	once.Do(
+		func() {
+			db, err = gorm.Open(
+				sqlite.Open("output/gorm.db"), &gorm.Config{
+					Logger: gormLogger.Discard,
+				},
+			)
+			if err != nil {
+				logger.Fatal("connect sqlite database error: ", err)
+			}
+		},
+	)
 	return db
 }
 
 func NewPostgres() *gorm.DB {
-	once.Do(func() {
-		dsn := "host=localhost user=guest password=123456 dbname=chat port=5432 sslmode=disable TimeZone=Asia/Shanghai"
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-			Logger: gormLogger.Default,
-		})
-		if err != nil {
-			logger.Fatal("connect postgras database error: ", err)
-		}
-	})
+	once.Do(
+		func() {
+			dsn := "host=localhost user=guest password=123456 dbname=chat port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+			db, err = gorm.Open(
+				postgres.Open(dsn), &gorm.Config{
+					Logger: gormLogger.Default,
+				},
+			)
+			if err != nil {
+				logger.Fatal("connect postgras database error: ", err)
+			}
+		},
+	)
 	return db
 }

@@ -5,12 +5,12 @@
 package v1
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/websocket/v2"
-
 	"learning/internal/service"
 	"learning/internal/utils"
 	"learning/logger"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/websocket/v2"
 )
 
 func ChatHandler(c *websocket.Conn) {

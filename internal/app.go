@@ -5,11 +5,11 @@
 package internal
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/websocket/v2"
-
 	v1 "learning/internal/api/v1"
 	"learning/internal/middleware"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/websocket/v2"
 )
 
 func NewApp() *fiber.App {

@@ -5,11 +5,11 @@
 package utils
 
 import (
+	"learning/config"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 	"github.com/golang-jwt/jwt/v4"
-
-	"learning/config"
 )
 
 func GetUserAccountFromCtx(c *fiber.Ctx) string {

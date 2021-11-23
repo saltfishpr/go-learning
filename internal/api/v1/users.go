@@ -5,12 +5,12 @@
 package v1
 
 import (
-	"github.com/gofiber/fiber/v2"
-
 	"learning/internal/model"
 	"learning/internal/service"
 	"learning/internal/utils"
 	"learning/logger"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func GetAllUsers(c *fiber.Ctx) error {

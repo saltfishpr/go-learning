@@ -5,10 +5,10 @@
 package service
 
 import (
-	"github.com/jinzhu/copier"
-
 	"learning/internal/data"
 	"learning/internal/model"
+
+	"github.com/jinzhu/copier"
 )
 
 func CreateUser(user *model.User) error {

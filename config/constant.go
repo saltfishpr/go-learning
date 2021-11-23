@@ -5,11 +5,8 @@ package config
 
 import "time"
 
+// BufferedChan chan size
 const BufferedChan = 1
-
-const (
-	CacheSize = 100 * 1024 * 1024 // 100 MB
-)
 
 // Colors
 const (
@@ -27,6 +24,7 @@ const (
 	YellowBold  = "\033[33;1m"
 )
 
+// JWT config
 const (
 	TokenExpireTime = 15 * time.Minute
 	SigningKey      = "saltfish"

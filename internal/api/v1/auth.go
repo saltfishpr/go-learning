@@ -7,13 +7,13 @@ package v1
 import (
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
-
 	"learning/config"
 	"learning/internal/model"
 	"learning/internal/service"
 	"learning/logger"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 func Register(c *fiber.Ctx) error {
@@ -22,7 +22,9 @@ func Register(c *fiber.Ctx) error {
 		logger.Error("parse body error: ", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "数据错误"})
 	}
-
+	if user.Nickname == nil {
+		user.Nickname = user.Account
+	}
 	err := service.CreateUser(user)
 	if err != nil {
 		logger.Error("create user error: ", err)

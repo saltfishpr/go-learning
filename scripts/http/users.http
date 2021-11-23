@@ -5,14 +5,15 @@ Content-Type: application/x-www-form-urlencoded
 
 account=saltfish&password=123456
 
+> {% client.global.set("auth_token", response.body.token); %}
+
 ### 注册用户
 POST http://127.0.0.1:9091/api/v1/register
 Content-Type: application/json
 
 {
-  "account": "saltfish",
-  "password": "123456",
-  "nickname": "咸鱼硕"
+    "account": "saltfish",
+    "password": "123456"
 }
 
 ### 注册用户 saltfishpr
@@ -20,54 +21,53 @@ POST http://127.0.0.1:9091/api/v1/register
 Content-Type: application/json
 
 {
-  "account": "saltfishpr",
-  "password": "123456",
-  "nickname": "咸鱼硕2"
+    "account": "saltfishpr",
+    "password": "123456"
 }
 
 ### 查询所有用户
 GET http://127.0.0.1:9091/api/v1/u
-Authorization: Bearer {{login.response.body.token}}
+Authorization: Bearer {{auth_token}}
 
 ### 更新用户
 PUT http://127.0.0.1:9091/api/v1/u
-Authorization: Bearer {{login.response.body.token}}
+Authorization: Bearer {{auth_token}}
 Content-Type: application/json
 
 {
-  "account": "saltfish",
-  "password": "123456",
-  "nickname": "咸鱼"
+    "account": "saltfish",
+    "password": "123456",
+    "nickname": "咸鱼硕"
 }
 
 ### 删除用户
 DELETE http://127.0.0.1:9091/api/v1/u?account=saltfish
-Authorization: Bearer {{login.response.body.token}}
+Authorization: Bearer {{auth_token}}
 
 ### 获取指定用户信息
 GET http://127.0.0.1:9091/api/v1/u/saltfish
-Authorization: Bearer {{login.response.body.token}}
+Authorization: Bearer {{auth_token}}
 
 ### 加入聊天室
 POST http://127.0.0.1:9091/api/v1/hubs?hid=alpha
-Authorization: Bearer {{login.response.body.token}}
+Authorization: Bearer {{auth_token}}
 
 ### 获取所有加入的聊天室
 GET http://127.0.0.1:9091/api/v1/hubs
-Authorization: Bearer {{login.response.body.token}}
+Authorization: Bearer {{auth_token}}
 
 ### 离开聊天室
 DELETE http://127.0.0.1:9091/api/v1/hubs?hid=alpha
-Authorization: Bearer {{login.response.body.token}}
+Authorization: Bearer {{auth_token}}
 
 ### 添加好友
 POST http://127.0.0.1:9091/api/v1/friends?account=saltfishpr
-Authorization: Bearer {{login.response.body.token}}
+Authorization: Bearer {{auth_token}}
 
 ### 获取所有好友
 GET http://127.0.0.1:9091/api/v1/friends
-Authorization: Bearer {{login.response.body.token}}
+Authorization: Bearer {{auth_token}}
 
 ### 删除好友
 DELETE http://127.0.0.1:9091/api/v1/friends?account=saltfishpr
-Authorization: Bearer {{login.response.body.token}}
+Authorization: Bearer {{auth_token}}

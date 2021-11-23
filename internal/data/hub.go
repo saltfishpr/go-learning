@@ -10,7 +10,7 @@ import (
 
 func init() {
 	_ = NewPostgres()
-	db.AutoMigrate(&Hub{})
+	_ = db.AutoMigrate(&Hub{})
 }
 
 type Hub struct {
@@ -18,7 +18,7 @@ type Hub struct {
 	DeletedAt soft_delete.DeletedAt `gorm:"uniqueIndex:hub_udx_delete"`
 
 	HID  *string `gorm:"size:8;not null;uniqueIndex:hub_udx_delete"`
-	Name *string `gorm:"not null"`
+	Name *string `gorm:"size:32;not null"`
 	Size *int    `gorm:"not null"`
 
 	Users []*User `gorm:"many2many:user_hub"`
