@@ -11,6 +11,7 @@ import (
 	"learning/logger"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	jwtware "github.com/gofiber/jwt/v3"
 )
@@ -37,5 +38,11 @@ var JwtAuth = jwtware.New(
 		AuthScheme: config.AuthScheme,
 		ContextKey: config.ContextKey,
 		SigningKey: []byte(config.SigningKey),
+	},
+)
+
+var CORS = cors.New(
+	cors.Config{
+		AllowOrigins: "http://localhost:9090",
 	},
 )

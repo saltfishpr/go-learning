@@ -53,7 +53,7 @@ func Login(c *fiber.Ctx) error {
 
 	t, err := token.SignedString([]byte(config.SigningKey))
 	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
 	}
 
 	return c.JSON(fiber.Map{"token": t, "expire_at": expireAt})

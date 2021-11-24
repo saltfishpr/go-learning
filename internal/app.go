@@ -14,10 +14,9 @@ import (
 
 func NewApp() *fiber.App {
 	app := fiber.New()
-	app.Static("/web/", "web")
-
 	app.Use(middleware.Recover)
 	app.Use(middleware.Timer)
+	app.Use(middleware.CORS)
 
 	apiV1 := app.Group("/api/v1")
 	{

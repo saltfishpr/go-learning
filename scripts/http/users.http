@@ -1,5 +1,4 @@
 ### 登录
-# @name login
 POST http://127.0.0.1:9091/api/v1/login
 Content-Type: application/x-www-form-urlencoded
 
