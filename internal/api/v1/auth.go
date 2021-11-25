@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"learning/config"
+	"learning/internal/constant/e"
 	"learning/internal/model"
 	"learning/internal/service"
 	"learning/logger"
@@ -20,7 +21,7 @@ func Register(c *fiber.Ctx) error {
 	user := new(model.User)
 	if err := c.BodyParser(user); err != nil {
 		logger.Error("parse body error: ", err)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "数据错误"})
+		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
 	if user.Nickname == nil {
 		user.Nickname = user.Account
@@ -28,7 +29,7 @@ func Register(c *fiber.Ctx) error {
 	err := service.CreateUser(user)
 	if err != nil {
 		logger.Error("create user error: ", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
+		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.ExistAccount))
 	}
 
 	return c.SendStatus(fiber.StatusCreated)
@@ -37,10 +38,14 @@ func Register(c *fiber.Ctx) error {
 func Login(c *fiber.Ctx) error {
 	account := c.FormValue("account")
 	password := c.FormValue("password")
+	if len(account) == 0 || len(password) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
+	}
 
 	user, err := service.GetUserByAccount(account)
 	if err != nil || *(user.Password) != password {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "用户名或密码错误"})
+		logger.Error("login error: ", err)
+		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.LoginFailed))
 	}
 
 	expireAt := time.Now().Add(config.TokenExpireTime).Unix()
@@ -53,7 +58,8 @@ func Login(c *fiber.Ctx) error {
 
 	t, err := token.SignedString([]byte(config.SigningKey))
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "服务器出现错误"})
+		logger.Error("sign token error: ", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("generate token failed")))
 	}
 
 	return c.JSON(fiber.Map{"token": t, "expire_at": expireAt})

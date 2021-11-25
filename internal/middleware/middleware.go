@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"learning/config"
+	"learning/internal/constant/color"
+	"learning/internal/constant/e"
 	"learning/logger"
 
 	"github.com/gofiber/fiber/v2"
@@ -27,7 +29,7 @@ var Timer = func(c *fiber.Ctx) error {
 	defer func() {
 		end := time.Now().UnixNano()
 		logger.Infof(
-			"url: %s%s%s use: %s%dns%s", config.BlueBold, c.Path(), config.Reset, config.Green, end-begin, config.Reset,
+			"url: %s%s%s use: %s%dns%s", color.BlueBold, c.Path(), color.Reset, color.Green, end-begin, color.Reset,
 		)
 	}()
 	return c.Next()
@@ -38,6 +40,9 @@ var JwtAuth = jwtware.New(
 		AuthScheme: config.AuthScheme,
 		ContextKey: config.ContextKey,
 		SigningKey: []byte(config.SigningKey),
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
+		},
 	},
 )
 
