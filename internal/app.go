@@ -25,6 +25,8 @@ func NewApp() *fiber.App {
 	}
 	apiV1.Use(middleware.JwtAuth)
 	{
+		apiV1.Get("/check", v1.Check)
+
 		apiV1.Post("/h", v1.CreateHub)
 		apiV1.Get("/h", v1.GetAllHubs)
 		apiV1.Put("/h", v1.UpdateHub)

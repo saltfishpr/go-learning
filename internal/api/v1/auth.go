@@ -65,6 +65,6 @@ func Login(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"token": t, "expire_at": expireAt})
 }
 
-func Logout(c *fiber.Ctx) error {
+func Check(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
