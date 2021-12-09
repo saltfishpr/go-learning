@@ -5,17 +5,23 @@
 package middleware
 
 import (
+	"fmt"
 	"time"
 
 	"learning/config"
+	"learning/internal/common/connstorage"
+	"learning/internal/common/gocache"
 	"learning/internal/constant/color"
 	"learning/internal/constant/e"
 	"learning/logger"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	jwtware "github.com/gofiber/jwt/v3"
+	"github.com/gofiber/websocket/v2"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 var Recover = recover.New(
@@ -51,3 +57,42 @@ var CORS = cors.New(
 		AllowOrigins: "http://localhost:9090",
 	},
 )
+
+var Cache = cache.New()
+
+var WebSocket = func(c *fiber.Ctx) error {
+	if websocket.IsWebSocketUpgrade(c) {
+		sid := c.Params("sid")
+		account, ok := gocache.Get(sid)
+		if !ok {
+			return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidSID))
+		}
+
+		token, err := jwt.Parse(
+			c.Query("token"), func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+				}
+				return []byte(config.SigningKey), nil
+			},
+		)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(
+				e.Failed(
+					e.TokenParse, e.WithMessage("invalid token"),
+				),
+			)
+		}
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid && claims["account"] == account {
+			if _, ok := connstorage.Get(sid); ok {
+				return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.SIDInUse))
+			}
+			c.Locals("sid", sid)
+			c.Locals("account", account)
+			return c.Next()
+		}
+		return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
+	}
+
+	return c.SendStatus(fiber.StatusUpgradeRequired)
+}

@@ -17,6 +17,15 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// Register is a function to sign up
+// @Summary Create an account
+// @Description Create an account
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 201
+// @Failure 400 {object} ResponseHTTP{}
+// @Router /register [post]
 func Register(c *fiber.Ctx) error {
 	user := new(model.User)
 	if err := c.BodyParser(user); err != nil {

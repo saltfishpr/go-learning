@@ -5,14 +5,19 @@
 package service
 
 import (
+	"context"
 	"errors"
+	"fmt"
 
+	"learning/internal/common/connstorage"
 	"learning/internal/data"
 	"learning/internal/model"
 	"learning/internal/utils"
+	"learning/logger"
 )
 
-func ProcessMessage(account string, data []byte) error {
+func ProcessMessage(ctx context.Context, data []byte) error {
+	account := ctx.Value("account").(string)
 	message := new(model.RecvMessage)
 	err := utils.JsonUnmarshal(data, message)
 	if err != nil {
@@ -29,17 +34,10 @@ func ProcessMessage(account string, data []byte) error {
 }
 
 func sendToUser(account string, message *model.RecvMessage) error {
-	sendMessage := new(model.SendMessage)
-	sendMessage.Content = *message.Content
-
-	connection := utils.GetConnection(*message.ID)
-	return connection.WriteJSON(sendMessage)
+	return send(*message.ID, *message.Content)
 }
 
 func sendToHub(account string, message *model.RecvMessage) error {
-	sendMessage := new(model.SendMessage)
-	sendMessage.Content = *message.Content
-
 	userEntity, err := data.GetUserByAccount(account)
 	if err != nil {
 		return err
@@ -53,19 +51,27 @@ func sendToHub(account string, message *model.RecvMessage) error {
 		return err
 	}
 	if !ok {
-		return errors.New("user has not joined the chat room")
+		return errors.New("user has not joined the hub")
 	}
 
 	userEntities, err := data.GetUsersInHub(hubEntity)
 	if err != nil {
 		return err
 	}
+
 	for _, userEntity := range userEntities {
-		connection := utils.GetConnection(*userEntity.Account)
-		err := connection.WriteJSON(sendMessage)
-		if err != nil {
-			return err
+		if err := send(*userEntity.Account, *message.Content); err != nil {
+			logger.Error(err)
 		}
 	}
 	return nil
+}
+
+func send(account string, message string) error {
+	sendMessage := new(model.SendMessage)
+	sendMessage.Content = message
+	if connection, ok := connstorage.Get(account); ok {
+		return connection.WriteJSON(sendMessage)
+	}
+	return fmt.Errorf("%s is offline", account)
 }

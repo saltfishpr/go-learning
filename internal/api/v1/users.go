@@ -79,7 +79,7 @@ func Join(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
 	}
 
-	account := utils.GetUserAccountFromCtx(c)
+	account := utils.MustGetUserAccountFromCtx(c)
 	err := service.JoinHub(account, hid)
 	if err != nil {
 		logger.Errorf("user %s join hub %s error: %s", account, hid, err)
@@ -89,7 +89,7 @@ func Join(c *fiber.Ctx) error {
 }
 
 func Joined(c *fiber.Ctx) error {
-	account := utils.GetUserAccountFromCtx(c)
+	account := utils.MustGetUserAccountFromCtx(c)
 	hubs, err := service.GetJoinedHubs(account)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
@@ -107,7 +107,7 @@ func Leave(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
 	}
 
-	account := utils.GetUserAccountFromCtx(c)
+	account := utils.MustGetUserAccountFromCtx(c)
 	err := service.LeaveHub(account, hid)
 	if err != nil {
 		logger.Errorf("user %s leave hub %s error: %s", account, hid, err)
@@ -122,7 +122,7 @@ func Follow(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams, e.WithMessage("missing account")))
 	}
 
-	account := utils.GetUserAccountFromCtx(c)
+	account := utils.MustGetUserAccountFromCtx(c)
 	err := service.FollowUser(account, friendAccount)
 	if err != nil {
 		logger.Errorf("user %s follow friend %s error: %s", account, friendAccount, err)
@@ -132,7 +132,7 @@ func Follow(c *fiber.Ctx) error {
 }
 
 func Following(c *fiber.Ctx) error {
-	account := utils.GetUserAccountFromCtx(c)
+	account := utils.MustGetUserAccountFromCtx(c)
 	friends, err := service.GetFollowingUsers(account)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
@@ -150,7 +150,7 @@ func Unfollow(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams, e.WithMessage("missing account")))
 	}
 
-	account := utils.GetUserAccountFromCtx(c)
+	account := utils.MustGetUserAccountFromCtx(c)
 	err := service.UnfollowUser(account, friendAccount)
 	if err != nil {
 		logger.Errorf("user %s unfollow friend %s error: %s", account, friendAccount, err)

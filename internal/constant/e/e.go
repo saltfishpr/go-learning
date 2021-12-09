@@ -16,6 +16,9 @@ const (
 
 	ExistAccount
 	LoginFailed
+	InvalidSID
+	TokenParse
+	SIDInUse
 )
 
 var errorMessage = map[ErrorCode]string{
@@ -26,6 +29,9 @@ var errorMessage = map[ErrorCode]string{
 	HubNotFound:   "no such hub",
 	ExistAccount:  "account already exists",
 	LoginFailed:   "wrong account or password",
+	InvalidSID:    "invalid socket id",
+	TokenParse:    "parse token error",
+	SIDInUse:      "sid already in use",
 }
 
 type ErrorResult struct {

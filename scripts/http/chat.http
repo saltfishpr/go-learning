@@ -1,0 +1,11 @@
+### 登录
+POST http://127.0.0.1:9091/login
+Content-Type: application/x-www-form-urlencoded
+
+account=saltfish&password=123456
+
+> {% client.global.set("auth_token", response.body.token); %}
+
+### 请求建立websocket连接
+GET http://127.0.0.1:9091/api/v1/chat
+Authorization: Bearer {{auth_token}}

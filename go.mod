@@ -3,6 +3,7 @@ module learning
 go 1.17
 
 require (
+	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gofiber/fiber/v2 v2.22.0
 	github.com/gofiber/jwt/v3 v3.2.1
 	github.com/gofiber/websocket/v2 v2.0.13
@@ -11,6 +12,7 @@ require (
 	github.com/jinzhu/copier v0.3.2
 	github.com/json-iterator/go v1.1.12
 	github.com/orcaman/concurrent-map v0.0.0-20210501183033-44dafcb38ecc
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/spf13/viper v1.9.0
 	go.uber.org/zap v1.19.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0

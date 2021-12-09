@@ -7,23 +7,27 @@ package internal
 import (
 	v1 "learning/internal/api/v1"
 	"learning/internal/middleware"
+	"learning/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 )
 
 func NewApp() *fiber.App {
-	app := fiber.New()
-	app.Use(middleware.Recover)
-	app.Use(middleware.Timer)
+	app := fiber.New(
+		fiber.Config{
+			JSONEncoder: utils.JsonMarshal,
+			JSONDecoder: utils.JsonUnmarshal,
+		},
+	)
+	app.Use(middleware.Recover, middleware.Timer)
 	app.Use(middleware.CORS)
+	app.Post("/register", v1.Register)
+	app.Post("/login", v1.Login)
 
 	apiV1 := app.Group("/api/v1")
-	{
-		apiV1.Post("/register", v1.Register)
-		apiV1.Post("/login", v1.Login)
-	}
 	apiV1.Use(middleware.JwtAuth)
+	apiV1.Use(middleware.Cache)
 	{
 		apiV1.Get("/check", v1.Check)
 
@@ -45,9 +49,10 @@ func NewApp() *fiber.App {
 		apiV1.Post("/friends", v1.Follow)
 		apiV1.Get("/friends", v1.Following)
 		apiV1.Delete("/friends", v1.Unfollow)
+
+		apiV1.Get("/chat", v1.ChatAuth)
 	}
 
-	chat := app.Group("/chat")
-	chat.Get("/message", websocket.New(v1.ChatHandler))
+	app.Get("/ws/:sid", middleware.WebSocket, websocket.New(v1.ChatHandler))
 	return app
 }

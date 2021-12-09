@@ -1,5 +1,5 @@
 ### 登录
-POST http://127.0.0.1:9091/api/v1/login
+POST http://127.0.0.1:9091/login
 Content-Type: application/x-www-form-urlencoded
 
 account=saltfish&password=123456

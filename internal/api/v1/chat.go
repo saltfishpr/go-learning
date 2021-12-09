@@ -5,6 +5,10 @@
 package v1
 
 import (
+	"context"
+
+	"learning/internal/common/connstorage"
+	"learning/internal/common/gocache"
 	"learning/internal/service"
 	"learning/internal/utils"
 	"learning/logger"
@@ -13,10 +17,17 @@ import (
 	"github.com/gofiber/websocket/v2"
 )
 
+func ChatAuth(c *fiber.Ctx) error {
+	sid := utils.GenerateSID().String()
+	account := utils.MustGetUserAccountFromCtx(c)
+	gocache.Set(sid, account, gocache.NoExpiration)
+	return c.Status(fiber.StatusUpgradeRequired).JSON(fiber.Map{"sid": sid})
+}
+
 func ChatHandler(c *websocket.Conn) {
-	account := utils.GetUserAccountWebsocketConn(c)
-	utils.Connect(account, c)
-	defer utils.Disconnect(account)
+	sid := c.Locals("sid").(string)
+	connstorage.Set(sid, c)
+	defer connstorage.Del(sid)
 
 	for {
 		messageType, message, err := c.ReadMessage()
@@ -29,7 +40,8 @@ func ChatHandler(c *websocket.Conn) {
 
 		switch messageType {
 		case websocket.TextMessage:
-			err := service.ProcessMessage(account, message)
+			ctx := context.WithValue(context.Background(), "account", c.Locals("account"))
+			err := service.ProcessMessage(ctx, message)
 			if err != nil {
 				logger.Error("process message error: ", err)
 				c.WriteJSON(fiber.Map{"message": err})

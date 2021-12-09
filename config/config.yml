@@ -1,4 +1,5 @@
 release: false
+node_id: 1
 
 lumberjack:
   max_size: 10

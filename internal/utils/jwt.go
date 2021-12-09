@@ -8,18 +8,21 @@ import (
 	"learning/config"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/websocket/v2"
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func GetUserAccountFromCtx(c *fiber.Ctx) string {
-	user := c.Locals(config.ContextKey).(*jwt.Token)
+func GetUserAccountFromCtx(c *fiber.Ctx) (string, bool) {
+	t := c.Locals(config.ContextKey)
+	if t == nil {
+		return "", false
+	}
+	user := t.(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	account := claims["account"].(string)
-	return account
+	return account, true
 }
 
-func GetUserAccountWebsocketConn(c *websocket.Conn) string {
+func MustGetUserAccountFromCtx(c *fiber.Ctx) string {
 	user := c.Locals(config.ContextKey).(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	account := claims["account"].(string)

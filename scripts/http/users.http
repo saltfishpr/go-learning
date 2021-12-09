@@ -1,5 +1,5 @@
 ### 登录
-POST http://127.0.0.1:9091/api/v1/login
+POST http://127.0.0.1:9091/login
 Content-Type: application/x-www-form-urlencoded
 
 account=saltfish&password=123456
@@ -7,7 +7,7 @@ account=saltfish&password=123456
 > {% client.global.set("auth_token", response.body.token); %}
 
 ### 注册用户
-POST http://127.0.0.1:9091/api/v1/register
+POST http://127.0.0.1:9091/register
 Content-Type: application/json
 
 {
@@ -16,7 +16,7 @@ Content-Type: application/json
 }
 
 ### 注册用户 saltfishpr
-POST http://127.0.0.1:9091/api/v1/register
+POST http://127.0.0.1:9091/register
 Content-Type: application/json
 
 {
