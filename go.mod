@@ -4,39 +4,39 @@ go 1.17
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0
-	github.com/gofiber/fiber/v2 v2.22.0
-	github.com/gofiber/jwt/v3 v3.2.1
-	github.com/gofiber/websocket/v2 v2.0.13
-	github.com/golang-jwt/jwt/v4 v4.1.0
+	github.com/gofiber/fiber/v2 v2.23.0
+	github.com/gofiber/jwt/v3 v3.2.2
+	github.com/gofiber/websocket/v2 v2.0.14
+	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/google/uuid v1.3.0
-	github.com/jinzhu/copier v0.3.2
+	github.com/jinzhu/copier v0.3.4
 	github.com/json-iterator/go v1.1.12
 	github.com/orcaman/concurrent-map v0.0.0-20210501183033-44dafcb38ecc
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/spf13/viper v1.9.0
 	go.uber.org/zap v1.19.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
-	gorm.io/driver/postgres v1.2.2
-	gorm.io/driver/sqlite v1.2.4
-	gorm.io/gorm v1.22.3
+	gorm.io/driver/postgres v1.2.3
+	gorm.io/driver/sqlite v1.2.6
+	gorm.io/gorm v1.22.4
 	gorm.io/plugin/soft_delete v1.0.4
 )
 
 require (
 	github.com/andybalholm/brotli v1.0.2 // indirect
-	github.com/fasthttp/websocket v1.4.3-rc.9 // indirect
+	github.com/fasthttp/websocket v1.4.3-rc.10 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgconn v1.10.0 // indirect
+	github.com/jackc/pgconn v1.10.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgproto3/v2 v2.1.1 // indirect
+	github.com/jackc/pgproto3/v2 v2.2.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
-	github.com/jackc/pgtype v1.8.1 // indirect
-	github.com/jackc/pgx/v4 v4.13.0 // indirect
+	github.com/jackc/pgtype v1.9.0 // indirect
+	github.com/jackc/pgx/v4 v4.14.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.2 // indirect
+	github.com/jinzhu/now v1.1.3 // indirect
 	github.com/klauspost/compress v1.13.4 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mattn/go-sqlite3 v1.14.9 // indirect
