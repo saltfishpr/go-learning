@@ -5,6 +5,7 @@
 package v1
 
 import (
+	"errors"
 	"time"
 
 	"learning/config"
@@ -15,46 +16,47 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
+	"gorm.io/gorm"
 )
 
-// Register is a function to sign up
-// @Summary Create an account
-// @Description Create an account
+// Login is a function to sign or sign up
+// @Summary Sign in or sign up.
+// @Description Sign in if account exists. Otherwise, sign up. If success, return a jwt token.
 // @Tags auth
 // @Accept json
 // @Produce json
+// @Success 200 {object} fiber.Map{"token": t, "expire_at": expireAt}
 // @Success 201
-// @Failure 400 {object} ResponseHTTP{}
+// @Failure 400 {object} e.ErrorResult
 // @Router /register [post]
-func Register(c *fiber.Ctx) error {
-	user := new(model.User)
-	if err := c.BodyParser(user); err != nil {
+func Login(c *fiber.Ctx) error {
+	userX := new(model.User)
+	if err := c.BodyParser(userX); err != nil {
 		logger.Error("parse body error: ", err)
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
-	if user.Nickname == nil {
-		user.Nickname = user.Account
-	}
-	err := service.CreateUser(user)
-	if err != nil {
-		logger.Error("create user error: ", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.ExistAccount))
-	}
-
-	return c.SendStatus(fiber.StatusCreated)
-}
-
-func Login(c *fiber.Ctx) error {
-	account := c.FormValue("account")
-	password := c.FormValue("password")
-	if len(account) == 0 || len(password) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
+	account := *userX.Account
+	password := *userX.Password
+	if userX.Nickname == nil {
+		userX.Nickname = userX.Account
 	}
 
 	user, err := service.GetUserByAccount(account)
-	if err != nil || *(user.Password) != password {
-		logger.Error("login error: ", err)
-		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.LoginFailed))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			if err := service.CreateUser(userX); err != nil {
+				logger.Error("create user error: ", err)
+				return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.ExistAccount))
+			}
+		} else {
+			logger.Error("get user error: ", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error))
+		}
+	} else {
+		if *(user.Password) != password {
+			logger.Error("login error: ", err)
+			return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.LoginFailed))
+		}
 	}
 
 	expireAt := time.Now().Add(config.TokenExpireTime).Unix()

@@ -21,7 +21,7 @@ func init() {
 
 func main() {
 	defer logger.Sync()
-	addr := flag.String("addr", "localhost:9091", "http service address")
+	addr := flag.String("addr", ":49091", "http service address")
 	flag.Parse()
 
 	logger.Info("Listening: ", *addr)

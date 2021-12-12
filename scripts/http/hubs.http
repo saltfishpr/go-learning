@@ -1,13 +1,16 @@
 ### 登录
-POST http://127.0.0.1:9091/login
-Content-Type: application/x-www-form-urlencoded
+POST http://{{addr}}/login
+Content-Type: application/json
 
-account=saltfish&password=123456
+{
+    "account": "saltfish",
+    "password": "123456"
+}
 
 > {% client.global.set("auth_token", response.body.token); %}
 
 ### 创建聊天室
-POST http://127.0.0.1:9091/api/v1/h
+POST http://{{addr}}/api/v1/h
 Authorization: Bearer {{auth_token}}
 Content-Type: application/json
 
@@ -18,11 +21,11 @@ Content-Type: application/json
 }
 
 ### 查询所有聊天室
-GET http://127.0.0.1:9091/api/v1/h
+GET http://{{addr}}/api/v1/h
 Authorization: Bearer {{auth_token}}
 
 ### 更新聊天室
-PUT http://127.0.0.1:9091/api/v1/h
+PUT http://{{addr}}/api/v1/h
 Authorization: Bearer {{auth_token}}
 Content-Type: application/json
 
@@ -33,9 +36,9 @@ Content-Type: application/json
 }
 
 ### 删除聊天室
-DELETE http://127.0.0.1:9091/api/v1/h?hid=alpha
+DELETE http://{{addr}}/api/v1/h?hid=alpha
 Authorization: Bearer {{auth_token}}
 
 ### 获取指定聊天室信息
-GET http://127.0.0.1:9091/api/v1/h/alpha
+GET http://{{addr}}/api/v1/h/alpha
 Authorization: Bearer {{auth_token}}

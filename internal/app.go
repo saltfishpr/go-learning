@@ -13,6 +13,12 @@ import (
 	"github.com/gofiber/websocket/v2"
 )
 
+// @title           Chat App API
+// @version         1.0
+// @description     This is the chat app server.
+
+// @license.name  MIT
+
 func NewApp() *fiber.App {
 	app := fiber.New(
 		fiber.Config{
@@ -22,7 +28,6 @@ func NewApp() *fiber.App {
 	)
 	app.Use(middleware.Recover, middleware.Timer)
 	app.Use(middleware.CORS)
-	app.Post("/register", v1.Register)
 	app.Post("/login", v1.Login)
 
 	apiV1 := app.Group("/api/v1")
