@@ -26,7 +26,7 @@ func NewApp() *fiber.App {
 			JSONDecoder: utils.JsonUnmarshal,
 		},
 	)
-	app.Use(middleware.Recover, middleware.Timer)
+	app.Use(middleware.Recover, middleware.Logger)
 	app.Use(middleware.CORS)
 	app.Post("/login", v1.Login)
 

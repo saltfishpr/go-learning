@@ -6,18 +6,16 @@ package middleware
 
 import (
 	"fmt"
-	"time"
 
 	"learning/config"
 	"learning/internal/common/connstorage"
 	"learning/internal/common/gocache"
-	"learning/internal/constant/color"
 	"learning/internal/constant/e"
-	"learning/logger"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	fiberlogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/gofiber/websocket/v2"
@@ -30,16 +28,7 @@ var Recover = recover.New(
 	},
 )
 
-var Timer = func(c *fiber.Ctx) error {
-	begin := time.Now().UnixNano()
-	defer func() {
-		end := time.Now().UnixNano()
-		logger.Infof(
-			"url: %s%s%s use: %s%dns%s", color.BlueBold, c.Path(), color.Reset, color.Green, end-begin, color.Reset,
-		)
-	}()
-	return c.Next()
-}
+var Logger = fiberlogger.New()
 
 var JwtAuth = jwtware.New(
 	jwtware.Config{
