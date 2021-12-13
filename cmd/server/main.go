@@ -5,6 +5,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"learning/config"
 	"learning/internal"
@@ -26,5 +30,19 @@ func main() {
 
 	logger.Info("Listening: ", *addr)
 	app := internal.NewApp()
-	logger.Fatal(app.Listen(*addr))
+	go func() {
+		if err := app.Listen(*addr); err != nil {
+			logger.Fatal(err)
+		}
+	}()
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+
+	_ = <-sig
+	fmt.Println("Shutting down...")
+	_ = app.Shutdown()
+	fmt.Println("Running cleanup tasks...")
+	// cleanup tasks go here
+	fmt.Println("Chat server was successful shutdown.")
 }
