@@ -12,12 +12,15 @@ import (
 	"learning/internal/constant/e"
 	"learning/internal/model"
 	"learning/internal/service"
+	"learning/internal/utils"
 	"learning/logger"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 	"gorm.io/gorm"
 )
+
+var validate = utils.NewValidate()
 
 // Login is a function to sign or sign up
 // @Summary Sign in or sign up.
@@ -33,6 +36,11 @@ func Login(c *fiber.Ctx) error {
 	userX := new(model.User)
 	if err := c.BodyParser(userX); err != nil {
 		logger.Error("parse body error: ", err)
+		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
+	}
+	err := validate.Struct(userX)
+	if err != nil {
+		utils.LogValidateErrors(err)
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
 	account := *userX.Account

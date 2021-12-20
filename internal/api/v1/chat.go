@@ -20,14 +20,14 @@ import (
 func ChatAuth(c *fiber.Ctx) error {
 	sid := utils.GenerateSID().String()
 	account := utils.MustGetUserAccountFromCtx(c)
-	gocache.Set(sid, account, gocache.NoExpiration)
-	return c.Status(fiber.StatusUpgradeRequired).JSON(fiber.Map{"sid": sid})
+	gocache.Set(sid, account, gocache.GeneralExpiration)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"sid": sid})
 }
 
 func ChatHandler(c *websocket.Conn) {
-	sid := c.Locals("sid").(string)
-	connstorage.Set(sid, c)
-	defer connstorage.Del(sid)
+	account := c.Locals("account").(string)
+	connstorage.Set(account, c)
+	defer connstorage.Del(account)
 
 	for {
 		messageType, message, err := c.ReadMessage()
@@ -40,7 +40,7 @@ func ChatHandler(c *websocket.Conn) {
 
 		switch messageType {
 		case websocket.TextMessage:
-			ctx := context.WithValue(context.Background(), "account", c.Locals("account"))
+			ctx := context.WithValue(context.Background(), "account", account)
 			err := service.ProcessMessage(ctx, message)
 			if err != nil {
 				logger.Error("process message error: ", err)

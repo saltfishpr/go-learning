@@ -14,8 +14,8 @@ import (
 )
 
 var node struct {
-	once     sync.Once
 	instance *snowflake.Node
+	once     sync.Once
 }
 
 func NewNode() *snowflake.Node {

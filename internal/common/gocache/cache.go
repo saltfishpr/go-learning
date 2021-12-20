@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	NoExpiration = cache.NoExpiration
+	GeneralExpiration = 15 * time.Minute
+	NoExpiration      = cache.NoExpiration
 )
 
 var c = cache.New(5*time.Minute, 10*time.Minute)

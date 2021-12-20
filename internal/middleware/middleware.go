@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"learning/config"
-	"learning/internal/common/connstorage"
 	"learning/internal/common/gocache"
 	"learning/internal/constant/e"
 
@@ -67,16 +66,11 @@ var WebSocket = func(c *fiber.Ctx) error {
 		)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(
-				e.Failed(
-					e.TokenParse, e.WithMessage("invalid token"),
-				),
+				e.Failed(e.TokenParse, e.WithMessage("invalid token")),
 			)
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid && claims["account"] == account {
-			if _, ok := connstorage.Get(sid); ok {
-				return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.SIDInUse))
-			}
-			c.Locals("sid", sid)
+			gocache.Del(sid)
 			c.Locals("account", account)
 			return c.Next()
 		}

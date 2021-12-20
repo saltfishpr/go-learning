@@ -4,12 +4,15 @@
 
 package model
 
-type RecvMessage struct {
-	Mode    *ChatMode `json:"mode" validate:"required"`    // 对象类型 0:user 1:hub
-	ID      *string   `json:"id" validate:"required"`      // 对象ID
-	Content *string   `json:"content" validate:"required"` // 消息内容
+import "fmt"
+
+type Message struct {
+	From    string   `json:"from" validate:"required"`
+	To      string   `json:"to" validate:"required"`
+	Payload []byte   `json:"payload" validate:"required"` // 消息内容
+	Mode    ChatMode `json:"mode" validate:"required"`    // 对象类型 0:user 1:hub
 }
 
-type SendMessage struct {
-	Content string
+func (m Message) String() string {
+	return fmt.Sprintf("[Mode: %d] %s send to %s, content: %s", m.Mode, m.From, m.To, string(m.Payload))
 }

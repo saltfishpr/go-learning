@@ -18,12 +18,13 @@ import (
 
 func ProcessMessage(ctx context.Context, data []byte) error {
 	account := ctx.Value("account").(string)
-	message := new(model.RecvMessage)
+	message := new(model.Message)
 	err := utils.JsonUnmarshal(data, message)
 	if err != nil {
 		return err
 	}
-	switch *message.Mode {
+	logger.Info(message)
+	switch message.Mode {
 	case model.ToUser:
 		return sendToUser(account, message)
 	case model.ToHub:
@@ -33,16 +34,19 @@ func ProcessMessage(ctx context.Context, data []byte) error {
 	}
 }
 
-func sendToUser(account string, message *model.RecvMessage) error {
-	return send(*message.ID, *message.Content)
+func sendToUser(account string, message *model.Message) error {
+	if connection, ok := connstorage.Get(account); ok {
+		return connection.WriteJSON(message)
+	}
+	return fmt.Errorf("%s is offline", account)
 }
 
-func sendToHub(account string, message *model.RecvMessage) error {
+func sendToHub(account string, message *model.Message) error {
 	userEntity, err := data.GetUserByAccount(account)
 	if err != nil {
 		return err
 	}
-	hubEntity, err := data.GetHubByHID(*message.ID)
+	hubEntity, err := data.GetHubByHID(message.To)
 	if err != nil {
 		return err
 	}
@@ -60,18 +64,9 @@ func sendToHub(account string, message *model.RecvMessage) error {
 	}
 
 	for _, userEntity := range userEntities {
-		if err := send(*userEntity.Account, *message.Content); err != nil {
+		if err := sendToUser(*userEntity.Account, message); err != nil {
 			logger.Error(err)
 		}
 	}
 	return nil
-}
-
-func send(account string, message string) error {
-	sendMessage := new(model.SendMessage)
-	sendMessage.Content = message
-	if connection, ok := connstorage.Get(account); ok {
-		return connection.WriteJSON(sendMessage)
-	}
-	return fmt.Errorf("%s is offline", account)
 }
