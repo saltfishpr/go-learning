@@ -21,7 +21,7 @@ const (
 
 var errorMessage = map[ErrorCode]string{
 	Error:            "fail",
-	Unauthorized:     "unauthorized or token expired, please login again",
+	Unauthorized:     "unauthorized or token expired",
 	InvalidParams:    "invalid params",
 	ExistHub:         "hub already exists",
 	HubNotFound:      "no such hub",

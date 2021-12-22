@@ -39,7 +39,7 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 
-	_ = <-sig
+	<-sig
 	fmt.Println("Shutting down...")
 	_ = app.Shutdown()
 	fmt.Println("Running cleanup tasks...")

@@ -11,6 +11,7 @@ import (
 
 	"learning/config"
 	"learning/internal/common/rediscache"
+	"learning/logger"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
@@ -63,6 +64,20 @@ func GenerateRefreshToken(account string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(config.SigningKey))
+}
+
+func GenerateTokenPair(account string) (fiber.Map, error) {
+	t, err := GenerateToken(account)
+	if err != nil {
+		logger.Error("generate token error: ", err)
+		return nil, errors.New("generate token error")
+	}
+	rt, err := GenerateRefreshToken(account)
+	if err != nil {
+		logger.Error("generate refresh token error: ", err)
+		return nil, errors.New("generate refresh token error")
+	}
+	return fiber.Map{"token": t, "refresh_token": rt}, nil
 }
 
 func GenerateDisposableToken(account string) (string, error) {

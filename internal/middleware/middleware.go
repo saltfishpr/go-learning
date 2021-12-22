@@ -33,9 +33,6 @@ var JwtAuth = jwtware.New(
 		AuthScheme: config.AuthScheme,
 		ContextKey: config.ContextKey,
 		SigningKey: []byte(config.SigningKey),
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
-		},
 	},
 )
 
@@ -54,10 +51,9 @@ var WebSocket = func(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
 		}
 		var account string
-		if err := rediscache.Get(config.DisposableTokenPrefix+claims["jti"].(string), &account); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
-		}
-		if claims["account"].(string) != account {
+		if err := rediscache.Get(
+			config.DisposableTokenPrefix+claims["jti"].(string), &account,
+		); err != nil || claims["account"].(string) != account {
 			return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
 		}
 		if err := rediscache.Del(config.DisposableTokenPrefix + claims["jti"].(string)); err != nil {

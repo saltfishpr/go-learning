@@ -59,21 +59,15 @@ func Login(c *fiber.Ctx) error {
 			logger.Error("get user error: ", err)
 			return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error))
 		}
-	} else {
-		if *(user.Password) != password {
-			logger.Error("login error: ", err)
-			return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.LoginFailed))
-		}
+	} else if *(user.Password) != password {
+		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.LoginFailed))
 	}
 
-	t, err := utils.GenerateToken(account)
-	rt, err := utils.GenerateRefreshToken(account)
+	data, err := utils.GenerateTokenPair(account)
 	if err != nil {
-		logger.Error("sign token error: ", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("generate token failed")))
+		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("Generate token failed.")))
 	}
-
-	return c.JSON(fiber.Map{"token": t, "refresh_token": rt})
+	return c.JSON(data)
 }
 
 func Refresh(c *fiber.Ctx) error {
@@ -83,21 +77,15 @@ func Refresh(c *fiber.Ctx) error {
 	}
 	var account string
 	if err := rediscache.Get(config.RefreshTokenPrefix+claims["jti"].(string), &account); err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized, e.WithMessage("Refresh Token Invalid")))
+		return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized, e.WithMessage("Invalid refresh token.")))
 	}
 	if err := rediscache.Del(config.RefreshTokenPrefix + claims["jti"].(string)); err != nil {
 		logger.Error("delete refresh token error: ", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("generate token failed")))
+		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("Generate token failed.")))
 	}
-	t, err := utils.GenerateToken(account)
-	rt, err := utils.GenerateRefreshToken(account)
+	data, err := utils.GenerateTokenPair(account)
 	if err != nil {
-		logger.Error("sign token error: ", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("generate token failed")))
+		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("Generate token failed.")))
 	}
-	return c.JSON(fiber.Map{"token": t, "refresh_token": rt})
-}
-
-func Check(c *fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusOK)
+	return c.JSON(data)
 }
