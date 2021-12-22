@@ -6,9 +6,9 @@ package v1
 
 import (
 	"errors"
-	"time"
 
 	"learning/config"
+	"learning/internal/common/rediscache"
 	"learning/internal/constant/e"
 	"learning/internal/model"
 	"learning/internal/service"
@@ -16,7 +16,6 @@ import (
 	"learning/logger"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
 	"gorm.io/gorm"
 )
 
@@ -28,7 +27,7 @@ var validate = utils.NewValidate()
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Success 200 {object} fiber.Map{"token": t, "expire_at": expireAt}
+// @Success 200 {object} fiber.Map{"token": token}
 // @Success 201
 // @Failure 400 {object} e.ErrorResult
 // @Router /register [post]
@@ -67,21 +66,36 @@ func Login(c *fiber.Ctx) error {
 		}
 	}
 
-	expireAt := time.Now().Add(config.TokenExpireTime).Unix()
-	claims := jwt.MapClaims{
-		"account":   account,
-		"expire_at": expireAt,
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	t, err := token.SignedString([]byte(config.SigningKey))
+	t, err := utils.GenerateToken(account)
+	rt, err := utils.GenerateRefreshToken(account)
 	if err != nil {
 		logger.Error("sign token error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("generate token failed")))
 	}
 
-	return c.JSON(fiber.Map{"token": t, "expire_at": expireAt})
+	return c.JSON(fiber.Map{"token": t, "refresh_token": rt})
+}
+
+func Refresh(c *fiber.Ctx) error {
+	claims, err := utils.VerifyToken(c.Query("refresh_token"))
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
+	}
+	var account string
+	if err := rediscache.Get(config.RefreshTokenPrefix+claims["jti"].(string), &account); err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized, e.WithMessage("Refresh Token Invalid")))
+	}
+	if err := rediscache.Del(config.RefreshTokenPrefix + claims["jti"].(string)); err != nil {
+		logger.Error("delete refresh token error: ", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("generate token failed")))
+	}
+	t, err := utils.GenerateToken(account)
+	rt, err := utils.GenerateRefreshToken(account)
+	if err != nil {
+		logger.Error("sign token error: ", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("generate token failed")))
+	}
+	return c.JSON(fiber.Map{"token": t, "refresh_token": rt})
 }
 
 func Check(c *fiber.Ctx) error {

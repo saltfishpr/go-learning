@@ -3,11 +3,22 @@ POST http://{{addr}}/login
 Content-Type: application/json
 
 {
-    "account": "saltfish",
-    "password": "123456"
+  "account": "saltfish",
+  "password": "123456"
 }
 
-> {% client.global.set("auth_token", response.body.token); %}
+> {%
+  client.global.set("auth_token", response.body.token);
+  client.global.set("refresh_token", response.body.refresh_token);
+%}
+
+### 刷新Token
+GET http://{{addr}}/refresh?refresh_token={{refresh_token}}
+
+> {%
+  client.global.set("auth_token", response.body.token);
+  client.global.set("refresh_token", response.body.refresh_token);
+%}
 
 ### 查询所有用户
 GET http://{{addr}}/api/v1/u

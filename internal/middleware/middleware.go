@@ -5,11 +5,11 @@
 package middleware
 
 import (
-	"fmt"
-
 	"learning/config"
-	"learning/internal/common/gocache"
+	"learning/internal/common/rediscache"
 	"learning/internal/constant/e"
+	"learning/internal/utils"
+	"learning/logger"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
@@ -18,7 +18,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/gofiber/websocket/v2"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 var Recover = recover.New(
@@ -50,32 +49,23 @@ var Cache = cache.New()
 
 var WebSocket = func(c *fiber.Ctx) error {
 	if websocket.IsWebSocketUpgrade(c) {
-		sid := c.Params("sid")
-		account, ok := gocache.Get(sid)
-		if !ok {
-			return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidSID))
-		}
-
-		token, err := jwt.Parse(
-			c.Query("token"), func(token *jwt.Token) (interface{}, error) {
-				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-				}
-				return []byte(config.SigningKey), nil
-			},
-		)
+		claims, err := utils.VerifyToken(c.Query("token"))
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(
-				e.Failed(e.TokenParse, e.WithMessage("invalid token")),
-			)
+			return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
 		}
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid && claims["account"] == account {
-			gocache.Del(sid)
-			c.Locals("account", account)
-			return c.Next()
+		var account string
+		if err := rediscache.Get(config.DisposableTokenPrefix+claims["jti"].(string), &account); err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
 		}
-		return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
+		if claims["account"].(string) != account {
+			return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
+		}
+		if err := rediscache.Del(config.DisposableTokenPrefix + claims["jti"].(string)); err != nil {
+			logger.Error("delete disposable token error: ", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error))
+		}
+		c.Locals("account", account)
+		return c.Next()
 	}
-
 	return c.SendStatus(fiber.StatusUpgradeRequired)
 }

@@ -1,5 +1,5 @@
-// @description: 生成唯一 SocketID
-// @file: sid_gen.go
+// @description: 雪花算法生成ID
+// @file: snowflake.go
 // @date: 2021/12/8
 
 package utils
@@ -29,8 +29,4 @@ func NewNode() *snowflake.Node {
 		},
 	)
 	return node.instance
-}
-
-func GenerateSID() snowflake.ID {
-	return NewNode().Generate()
 }

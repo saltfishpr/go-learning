@@ -8,7 +8,7 @@ import (
 	"context"
 
 	"learning/internal/common/connstorage"
-	"learning/internal/common/gocache"
+	"learning/internal/constant/e"
 	"learning/internal/service"
 	"learning/internal/utils"
 	"learning/logger"
@@ -18,10 +18,14 @@ import (
 )
 
 func ChatAuth(c *fiber.Ctx) error {
-	sid := utils.GenerateSID().String()
+	// TODO: generate token with jti
 	account := utils.MustGetUserAccountFromCtx(c)
-	gocache.Set(sid, account, gocache.GeneralExpiration)
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"sid": sid})
+	token, err := utils.GenerateDisposableToken(account)
+	if err != nil {
+		logger.Error("sign token error: ", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("generate token failed")))
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": token})
 }
 
 func ChatHandler(c *websocket.Conn) {

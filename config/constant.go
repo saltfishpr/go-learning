@@ -11,8 +11,13 @@ const BufferedChan = 1
 
 // JWT config
 const (
-	TokenExpireTime = 15 * time.Minute
-	SigningKey      = "saltfish"
-	ContextKey      = "user"
-	AuthScheme      = "Bearer"
+	SigningKey = "saltfish"
+	ContextKey = "user"
+	AuthScheme = "Bearer"
+
+	TokenExpireTime        = 15 * time.Minute
+	RefreshTokenExpireTime = 24 * time.Hour
+
+	RefreshTokenPrefix    = "refresh_token_jti_"
+	DisposableTokenPrefix = "disposable_token_jti_"
 )

@@ -16,22 +16,18 @@ const (
 
 	ExistAccount
 	LoginFailed
-	InvalidSID
-	TokenParse
-	SIDInUse
+	TokenParseFailed
 )
 
 var errorMessage = map[ErrorCode]string{
-	Error:         "fail",
-	Unauthorized:  "unauthorized or token expired, please login again",
-	InvalidParams: "invalid params",
-	ExistHub:      "hub already exists",
-	HubNotFound:   "no such hub",
-	ExistAccount:  "account already exists",
-	LoginFailed:   "wrong account or password",
-	InvalidSID:    "invalid socket id",
-	TokenParse:    "parse token error",
-	SIDInUse:      "sid already in use",
+	Error:            "fail",
+	Unauthorized:     "unauthorized or token expired, please login again",
+	InvalidParams:    "invalid params",
+	ExistHub:         "hub already exists",
+	HubNotFound:      "no such hub",
+	ExistAccount:     "account already exists",
+	LoginFailed:      "wrong account or password",
+	TokenParseFailed: "parse token error",
 }
 
 type ErrorResult struct {

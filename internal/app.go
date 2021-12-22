@@ -29,6 +29,7 @@ func NewApp() *fiber.App {
 	app.Use(middleware.Recover, middleware.Logger)
 	app.Use(middleware.CORS)
 	app.Post("/login", v1.Login)
+	app.Get("/refresh", v1.Refresh)
 
 	apiV1 := app.Group("/api/v1")
 	apiV1.Use(middleware.JwtAuth)
@@ -58,6 +59,6 @@ func NewApp() *fiber.App {
 		apiV1.Get("/chat", v1.ChatAuth)
 	}
 
-	app.Get("/ws/:sid", middleware.WebSocket, websocket.New(v1.ChatHandler))
+	app.Get("/ws", middleware.WebSocket, websocket.New(v1.ChatHandler))
 	return app
 }
