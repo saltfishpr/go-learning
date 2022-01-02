@@ -8,11 +8,6 @@ import (
 	"gorm.io/plugin/soft_delete"
 )
 
-func init() {
-	_ = NewPostgres()
-	_ = db.AutoMigrate(&User{})
-}
-
 type User struct {
 	Base
 	DeletedAt soft_delete.DeletedAt `gorm:"uniqueIndex:user_udx_delete"`

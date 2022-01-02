@@ -13,23 +13,25 @@ import (
 
 	"learning/config"
 	"learning/internal"
+	"learning/internal/data"
 	"learning/logger"
 )
 
-var BuildDate string
-
-func init() {
-	config.Init("config", "yml", []string{"config"})
-	logger.Init()
-	logger.Info("build date: ", BuildDate)
-}
+var buildTag = "undef"
 
 func main() {
-	defer logger.Sync()
-	addr := flag.String("addr", ":49091", "http service address")
+	release := flag.Bool("release", false, "Run in release mode.")
+	addr := flag.String("addr", ":49091", "HTTP service address.")
 	flag.Parse()
 
-	logger.Info("Listening: ", *addr)
+	logger.Init(*release)
+	defer logger.Sync()
+	logger.Info("build tag: ", buildTag)
+
+	config.Init("config", "yml", []string{"config"})
+
+	data.Init(config.GetString("database"))
+
 	app := internal.NewApp()
 	go func() {
 		if err := app.Listen(*addr); err != nil {

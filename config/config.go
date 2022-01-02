@@ -1,5 +1,5 @@
 // @description: 封装 viper 库，避免其它包依赖 viper。
-// @file: default.go
+// @file: config.go
 // @date: 2021/11/16
 
 // Package config 读取配置文件。
@@ -8,10 +8,25 @@ package config
 import (
 	"time"
 
+	"learning/logger"
+
 	"github.com/spf13/viper"
 )
 
 var v = viper.New()
+
+// Init 初始化配置
+func Init(fileName string, fileExtension string, configPath []string) {
+	v.SetConfigName(fileName)
+	v.SetConfigType(fileExtension)
+	for _, path := range configPath {
+		v.AddConfigPath(path)
+	}
+	err := v.ReadInConfig() // Find and read the config file
+	if err != nil {
+		logger.Panic("read config error: ", err)
+	}
+}
 
 // Get can retrieve any value given the key to use.
 // Get is case-insensitive for a key.
@@ -88,16 +103,3 @@ func Unmarshal(rawVal interface{}, opts ...viper.DecoderConfigOption) error {
 // AllKeys returns all keys holding a value, regardless of where they are set.
 // Nested keys are returned with a v.keyDelim separator
 func AllKeys() []string { return v.AllKeys() }
-
-// Init 初始化配置
-func Init(fileName string, fileExtension string, configPath []string) {
-	v.SetConfigName(fileName)
-	v.SetConfigType(fileExtension)
-	for _, path := range configPath {
-		v.AddConfigPath(path)
-	}
-	err := v.ReadInConfig() // Find and read the config file
-	if err != nil {
-		panic(err)
-	}
-}

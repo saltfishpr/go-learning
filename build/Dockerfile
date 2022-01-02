@@ -8,7 +8,7 @@ WORKDIR /build
 
 COPY . .
 
-RUN go mod tidy && CGO_ENABLED=0 go build -ldflags "-X 'main.BuildDate=$(date '+%F %H:%M:%S')'" -o app ${APP_NAME}/cmd/server
+RUN go mod tidy && CGO_ENABLED=0 go build -ldflags "-X 'main.buildTag=$(date '+%F %H:%M:%S')'" -o app ${APP_NAME}/cmd/server
 
 # Final stage
 FROM scratch

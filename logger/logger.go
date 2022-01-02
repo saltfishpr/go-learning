@@ -1,5 +1,5 @@
 // @description: 封装 zap 库，提供默认实现。
-// @file: default.go
+// @file: logger.go
 // @date: 2021/11/16
 
 // Package logger 提供日志记录。
@@ -10,29 +10,33 @@ import (
 	"os"
 	"time"
 
-	"learning/config"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
+)
+
+const (
+	maxSize    = 10
+	maxAge     = 30
+	maxBackups = 5
 )
 
 // 初始化前使用默认配置。
 var sugar = zap.NewExample(zap.Development()).Sugar()
 
 // Init 初始化 sugar。
-func Init() {
-	sugar = New()
+func Init(release bool) {
+	sugar = New(release)
 }
 
 // New 使用配置创建 *zap.SugaredLogger。
-func New() *zap.SugaredLogger {
+func New(release bool) *zap.SugaredLogger {
 	var (
 		encoder zapcore.Encoder
 		level   zapcore.Level
 	)
 
-	if config.GetString("release") == "true" {
+	if release {
 		encoderConfig := zap.NewProductionEncoderConfig()
 		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 		encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
@@ -56,9 +60,9 @@ func New() *zap.SugaredLogger {
 func getLogWriter(filename string) zapcore.WriteSyncer {
 	hook := &lumberjack.Logger{
 		Filename:   filename,
-		MaxSize:    config.GetInt("lumberjack.max_size"),
-		MaxAge:     config.GetInt("lumberjack.max_age"),
-		MaxBackups: config.GetInt("lumberjack.max_backups"),
+		MaxSize:    maxSize,
+		MaxAge:     maxAge,
+		MaxBackups: maxBackups,
 		Compress:   false,
 	}
 	return zapcore.AddSync(hook)

@@ -22,20 +22,15 @@ var (
 	err  error
 )
 
-func NewSqlite() *gorm.DB {
-	once.Do(
-		func() {
-			db, err = gorm.Open(
-				sqlite.Open("output/gorm.db"), &gorm.Config{
-					Logger: gormLogger.Discard,
-				},
-			)
-			if err != nil {
-				logger.Fatal("connect sqlite database error: ", err)
-			}
-		},
-	)
-	return db
+func Init(choice string) {
+	switch choice {
+	case "sqlite":
+		_ = NewSqlite()
+	default:
+		_ = NewPostgres()
+	}
+	_ = db.AutoMigrate(&User{})
+	_ = db.AutoMigrate(&Hub{})
 }
 
 func NewPostgres() *gorm.DB {
@@ -49,6 +44,22 @@ func NewPostgres() *gorm.DB {
 			)
 			if err != nil {
 				logger.Fatal("connect postgras database error: ", err)
+			}
+		},
+	)
+	return db
+}
+
+func NewSqlite() *gorm.DB {
+	once.Do(
+		func() {
+			db, err = gorm.Open(
+				sqlite.Open("output/gorm.db"), &gorm.Config{
+					Logger: gormLogger.Discard,
+				},
+			)
+			if err != nil {
+				logger.Fatal("connect sqlite database error: ", err)
 			}
 		},
 	)
