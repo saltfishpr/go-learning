@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"learning/config"
 	"learning/internal"
@@ -41,7 +42,8 @@ func main() {
 
 	<-sig
 	fmt.Println("Shutting down...")
-	_ = app.Shutdown()
+	go app.Shutdown()
+	<-time.After(config.ShutdownTime)
 	fmt.Println("Running cleanup tasks...")
 	// cleanup tasks go here
 	fmt.Println("Chat server was successful shutdown.")

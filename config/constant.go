@@ -21,3 +21,7 @@ const (
 	RefreshTokenPrefix    = "refresh_token_jti_"
 	DisposableTokenPrefix = "disposable_token_jti_"
 )
+
+const (
+	ShutdownTime = 5 * time.Second
+)

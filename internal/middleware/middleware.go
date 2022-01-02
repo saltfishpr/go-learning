@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	fiberlogger "github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/gofiber/websocket/v2"
@@ -27,6 +28,8 @@ var Recover = recover.New(
 )
 
 var Logger = fiberlogger.New()
+
+var Pprof = pprof.New()
 
 var JwtAuth = jwtware.New(
 	jwtware.Config{
