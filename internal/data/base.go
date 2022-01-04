@@ -11,7 +11,7 @@ import (
 )
 
 type Base struct {
-	ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4()"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4()"`
 }

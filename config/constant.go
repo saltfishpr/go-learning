@@ -25,3 +25,7 @@ const (
 const (
 	ShutdownTime = 5 * time.Second
 )
+
+const (
+	TopicPrefixLen = 3
+)

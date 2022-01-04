@@ -4,9 +4,8 @@
 
 package model
 
-type ChatMode int
+type PayloadMode int
 
 const (
-	ToUser ChatMode = iota
-	ToHub
+	PlainText PayloadMode = iota
 )
