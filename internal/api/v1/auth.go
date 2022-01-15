@@ -10,10 +10,10 @@ import (
 	"learning/config"
 	"learning/internal/common/rediscache"
 	"learning/internal/constant/e"
+	"learning/internal/logger"
 	"learning/internal/model"
 	"learning/internal/service"
 	"learning/internal/utils"
-	"learning/logger"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -27,7 +27,7 @@ var validate = utils.NewValidate()
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Success 200 {object} fiber.Map{"token": token}
+// @Success 200 {object} fiber.Map
 // @Success 201
 // @Failure 400 {object} e.ErrorResult
 // @Router /register [post]

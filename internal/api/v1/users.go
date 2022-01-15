@@ -6,10 +6,10 @@ package v1
 
 import (
 	"learning/internal/constant/e"
+	"learning/internal/logger"
 	"learning/internal/model"
 	"learning/internal/service"
 	"learning/internal/utils"
-	"learning/logger"
 
 	"github.com/gofiber/fiber/v2"
 )

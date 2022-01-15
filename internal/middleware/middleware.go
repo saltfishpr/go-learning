@@ -8,8 +8,8 @@ import (
 	"learning/config"
 	"learning/internal/common/rediscache"
 	"learning/internal/constant/e"
+	"learning/internal/logger"
 	"learning/internal/utils"
-	"learning/logger"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"

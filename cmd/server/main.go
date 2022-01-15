@@ -1,5 +1,5 @@
-// @file: main.go
-// @date: 2021/11/1
+// @file:  main.go
+// @date:  2021/11/1
 
 package main
 
@@ -12,9 +12,10 @@ import (
 	"time"
 
 	"learning/config"
+	"learning/docs"
 	"learning/internal"
 	"learning/internal/data"
-	"learning/logger"
+	"learning/internal/logger"
 )
 
 var buildTag = "undef"
@@ -31,6 +32,11 @@ func main() {
 	config.Init("config", "yml", []string{"config"})
 
 	data.Init(config.GetString("database"))
+
+	docs.SwaggerInfo.Title = "Chat App Server"
+	docs.SwaggerInfo.Version = "1.0"
+	docs.SwaggerInfo.Description = "This is the chat app server."
+	docs.SwaggerInfo.Schemes = []string{"http"}
 
 	app := internal.NewApp()
 	go func() {

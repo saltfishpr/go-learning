@@ -7,7 +7,7 @@ package utils
 import (
 	"sync"
 
-	"learning/logger"
+	"learning/internal/logger"
 
 	"github.com/go-playground/validator/v10"
 )

@@ -29,6 +29,11 @@ docker:
 generate:
 	go generate ./...
 
+.PHONY: docs
+# generate swag docs
+docs:
+	swag init --pd --dir cmd/server/
+
 # show help
 help:
 	@echo 'Usage:'

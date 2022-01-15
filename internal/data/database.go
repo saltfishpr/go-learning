@@ -8,7 +8,7 @@ package data
 import (
 	"sync"
 
-	"learning/logger"
+	"learning/internal/logger"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"

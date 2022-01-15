@@ -12,12 +12,14 @@ import (
 	"learning/config"
 	"learning/internal/common/connstorage"
 	"learning/internal/data"
+	"learning/internal/logger"
 	"learning/internal/model"
 	"learning/internal/utils"
-	"learning/logger"
+
+	"github.com/jinzhu/copier"
 )
 
-type Topic interface {
+type topic interface {
 	auth(string) bool
 	send(*model.RecvMessage) error
 }
@@ -85,22 +87,42 @@ func ProcessMessage(ctx context.Context, data []byte) error {
 		return err
 	}
 	logger.Info(message)
-	topic := getTopic(message.Topic)
-	if topic == nil {
+	t := getTopic(message.Topic)
+	if t == nil {
 		return errors.New("wrong topic")
 	}
-	return topic.send(message)
+	// TODO: Save message to database
+	return t.send(message)
 }
 
-func getTopic(topic string) Topic {
-	switch topic[:config.TopicPrefixLen] {
+func getTopic(topicStr string) topic {
+	switch topicStr[:config.TopicPrefixLen] {
 	case "usr":
-		account := topic[config.TopicPrefixLen:]
+		account := topicStr[config.TopicPrefixLen:]
 		return user{account: account}
 	case "hub":
-		hid := topic[config.TopicPrefixLen:]
+		hid := topicStr[config.TopicPrefixLen:]
 		return hub{hid: hid}
 	default:
 		return nil
 	}
+}
+
+func GetMessagesPagination(account string, query *model.MessagesPaginationQuery) (*model.MessagesPaginationResponse, error) {
+	t := getTopic(query.Topic)
+	if !t.auth(account) {
+		return nil, errors.New("topic auth failed")
+	}
+	count, messageEntities, err := data.GetMessagesPagination(query.Topic, query.Offset, query.Limit)
+	if err != nil {
+		return nil, err
+	}
+	messages := make([]model.SendMessage, len(messageEntities))
+	copier.Copy(&messages, &messageEntities)
+	return &model.MessagesPaginationResponse{
+		Data:   messages,
+		Offset: query.Offset,
+		Limit:  query.Limit,
+		Count:  count,
+	}, nil
 }

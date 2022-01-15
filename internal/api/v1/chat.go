@@ -9,16 +9,17 @@ import (
 
 	"learning/internal/common/connstorage"
 	"learning/internal/constant/e"
+	"learning/internal/logger"
+	"learning/internal/model"
 	"learning/internal/service"
 	"learning/internal/utils"
-	"learning/logger"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
+	"github.com/spf13/cast"
 )
 
 func ChatAuth(c *fiber.Ctx) error {
-	// TODO: generate token with jti
 	account := utils.MustGetUserAccountFromCtx(c)
 	token, err := utils.GenerateDisposableToken(account)
 	if err != nil {
@@ -44,8 +45,7 @@ func ChatHandler(c *websocket.Conn) {
 
 		switch messageType {
 		case websocket.TextMessage:
-			ctx := context.WithValue(context.Background(), "account", account)
-			err := service.ProcessMessage(ctx, message)
+			err := service.ProcessMessage(context.TODO(), message)
 			if err != nil {
 				logger.Error("process message error: ", err)
 				c.WriteJSON(fiber.Map{"message": err})
@@ -57,4 +57,24 @@ func ChatHandler(c *websocket.Conn) {
 			logger.Info("websocket message received of type: ", messageType)
 		}
 	}
+}
+
+func GetMessages(c *fiber.Ctx) error {
+	topic := c.Params("topic")
+	offset := c.Query("offset")
+	limit := c.Query("limit")
+	if len(topic) == 0 || len(offset) == 0 || len(limit) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
+	}
+	query := &model.MessagesPaginationQuery{
+		Topic:  topic,
+		Offset: cast.ToInt(offset),
+		Limit:  cast.ToInt(limit),
+	}
+	messages, err := service.GetMessagesPagination(utils.MustGetUserAccountFromCtx(c), query)
+	if err != nil {
+		logger.Error("get messages error: ", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error)) // TODO: Add ErrorCode
+	}
+	return c.Status(fiber.StatusOK).JSON(messages)
 }

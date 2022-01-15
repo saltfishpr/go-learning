@@ -11,7 +11,7 @@ import (
 
 	"learning/config"
 	"learning/internal/common/rediscache"
-	"learning/logger"
+	"learning/internal/logger"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"

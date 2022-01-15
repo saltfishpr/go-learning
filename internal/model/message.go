@@ -13,12 +13,25 @@ type RecvMessage struct {
 	Mode    PayloadMode `json:"mode" validate:"required"`    // 消息类型
 }
 
+func (m RecvMessage) String() string {
+	return fmt.Sprintf("%s send to %s, content: %s", m.From, m.Topic, string(m.Payload))
+}
+
 type SendMessage struct {
 	From    string      `json:"from"`
 	Payload []byte      `json:"payload"`
 	Mode    PayloadMode `json:"mode"`
 }
 
-func (m RecvMessage) String() string {
-	return fmt.Sprintf("%s send to %s, content: %s", m.From, m.Topic, string(m.Payload))
+type MessagesPaginationQuery struct {
+	Topic  string
+	Offset int
+	Limit  int
+}
+
+type MessagesPaginationResponse struct {
+	Data   []SendMessage
+	Offset int
+	Limit  int
+	Count  int
 }

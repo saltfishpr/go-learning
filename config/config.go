@@ -8,7 +8,7 @@ package config
 import (
 	"time"
 
-	"learning/logger"
+	"learning/internal/logger"
 
 	"github.com/spf13/viper"
 )

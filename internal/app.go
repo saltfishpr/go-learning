@@ -11,13 +11,15 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
-// @title           Chat App API
-// @version         1.0
-// @description     This is the chat app server.
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
 
-// @license.name  MIT
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
 
 func NewApp() *fiber.App {
 	app := fiber.New(
@@ -28,6 +30,7 @@ func NewApp() *fiber.App {
 	)
 	app.Use(middleware.Recover, middleware.Pprof, middleware.Logger)
 	app.Use(middleware.CORS)
+	app.Get("/swagger/*", fiberSwagger.WrapHandler)
 	app.Post("/login", v1.Login)
 	app.Get("/refresh", v1.Refresh)
 
@@ -55,6 +58,8 @@ func NewApp() *fiber.App {
 		apiV1.Delete("/friends", v1.Unfollow)
 
 		apiV1.Get("/chat", v1.ChatAuth)
+
+		apiV1.Get("/messages/:topic", v1.GetMessages)
 	}
 
 	app.Get("/ws", middleware.WebSocket, websocket.New(v1.ChatHandler))

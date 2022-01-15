@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"learning/config"
-	"learning/logger"
+	"learning/internal/logger"
 
 	"github.com/bwmarrin/snowflake"
 )

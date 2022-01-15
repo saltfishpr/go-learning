@@ -8,9 +8,9 @@ import (
 	"net/http"
 
 	"learning/internal/constant/e"
+	"learning/internal/logger"
 	"learning/internal/model"
 	"learning/internal/service"
-	"learning/logger"
 
 	"github.com/gofiber/fiber/v2"
 )
