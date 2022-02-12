@@ -1,0 +1,1 @@
+long readFile(const char *filename, char **buffer);
