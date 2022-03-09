@@ -11,6 +11,10 @@ import (
 	"strings"
 )
 
+func main() {
+
+}
+
 func inputExample() {
 	inputReader := bufio.NewReader(os.Stdin)
 	var input string
