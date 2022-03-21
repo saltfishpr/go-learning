@@ -5,10 +5,9 @@
 package middleware
 
 import (
-	"learning/config"
 	"learning/internal/common/rediscache"
+	"learning/internal/constant"
 	"learning/internal/constant/e"
-	"learning/internal/logger"
 	"learning/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -19,6 +18,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/gofiber/websocket/v2"
+	"go.uber.org/zap"
 )
 
 var Recover = recover.New(
@@ -33,9 +33,9 @@ var Pprof = pprof.New()
 
 var JwtAuth = jwtware.New(
 	jwtware.Config{
-		AuthScheme: config.AuthScheme,
-		ContextKey: config.ContextKey,
-		SigningKey: []byte(config.SigningKey),
+		AuthScheme: constant.AuthScheme,
+		ContextKey: constant.ContextKey,
+		SigningKey: []byte(constant.SigningKey),
 	},
 )
 
@@ -55,12 +55,12 @@ var WebSocket = func(c *fiber.Ctx) error {
 		}
 		var account string
 		if err := rediscache.Get(
-			config.DisposableTokenPrefix+claims["jti"].(string), &account,
+			constant.DisposableTokenPrefix+claims["jti"].(string), &account,
 		); err != nil || claims["account"].(string) != account {
 			return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
 		}
-		if err := rediscache.Del(config.DisposableTokenPrefix + claims["jti"].(string)); err != nil {
-			logger.Error("delete disposable token error: ", err)
+		if err := rediscache.Del(constant.DisposableTokenPrefix + claims["jti"].(string)); err != nil {
+			zap.S().Error("delete disposable token error: ", err)
 			return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error))
 		}
 		c.Locals("account", account)

@@ -7,9 +7,8 @@ package utils
 import (
 	"sync"
 
-	"learning/internal/logger"
-
 	"github.com/go-playground/validator/v10"
+	"go.uber.org/zap"
 )
 
 var validate struct {
@@ -26,11 +25,11 @@ func NewValidate() *validator.Validate {
 
 func LogValidateErrors(errs error) {
 	if _, ok := errs.(*validator.InvalidValidationError); ok {
-		logger.Error(errs)
+		zap.S().Error(errs)
 		return
 	}
 
 	for _, err := range errs.(validator.ValidationErrors) {
-		logger.Error(err)
+		zap.S().Error(err)
 	}
 }

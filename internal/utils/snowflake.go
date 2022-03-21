@@ -7,10 +7,10 @@ package utils
 import (
 	"sync"
 
-	"learning/config"
-	"learning/internal/logger"
+	"learning/internal/config"
 
 	"github.com/bwmarrin/snowflake"
+	"go.uber.org/zap"
 )
 
 var node struct {
@@ -21,9 +21,10 @@ var node struct {
 func NewNode() *snowflake.Node {
 	node.once.Do(
 		func() {
-			n, err := snowflake.NewNode(config.GetInt64("node_id"))
+			cfg := config.GetConfig()
+			n, err := snowflake.NewNode(cfg.NodeID)
 			if err != nil {
-				logger.Fatal(err)
+				zap.S().Fatal(err)
 			}
 			node.instance = n
 		},

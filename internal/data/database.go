@@ -8,7 +8,7 @@ package data
 import (
 	"sync"
 
-	"learning/internal/logger"
+	"go.uber.org/zap"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -43,7 +43,7 @@ func NewPostgres() *gorm.DB {
 				},
 			)
 			if err != nil {
-				logger.Fatal("connect postgras database error: ", err)
+				zap.S().Fatal("connect postgras database error: ", err)
 			}
 		},
 	)
@@ -59,7 +59,7 @@ func NewSqlite() *gorm.DB {
 				},
 			)
 			if err != nil {
-				logger.Fatal("connect sqlite database error: ", err)
+				zap.S().Fatal("connect sqlite database error: ", err)
 			}
 		},
 	)

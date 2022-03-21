@@ -11,27 +11,33 @@ import (
 	"syscall"
 	"time"
 
-	"learning/config"
 	"learning/docs"
 	"learning/internal"
+	"learning/internal/config"
+	"learning/internal/constant"
 	"learning/internal/data"
-	"learning/internal/logger"
-)
 
-var buildTag = "undef"
+	"go.uber.org/zap"
+)
 
 func main() {
 	release := flag.Bool("release", false, "Run in release mode.")
 	addr := flag.String("addr", ":49091", "HTTP service address.")
 	flag.Parse()
 
-	logger.Init(*release)
+	var logger *zap.Logger
+	if *release {
+		logger, _ = zap.NewProduction(zap.AddCaller())
+	} else {
+		logger, _ = zap.NewDevelopment(zap.AddCaller())
+	}
 	defer logger.Sync()
-	logger.Info("build tag: ", buildTag)
+	zap.ReplaceGlobals(logger)
 
 	config.Init("config", "yml", []string{"config"})
+	cfg := config.GetConfig()
 
-	data.Init(config.GetString("database"))
+	data.Init(cfg.Database)
 
 	docs.SwaggerInfo.Title = "Chat App Server"
 	docs.SwaggerInfo.Version = "1.0"
@@ -41,7 +47,7 @@ func main() {
 	app := internal.NewApp()
 	go func() {
 		if err := app.Listen(*addr); err != nil {
-			logger.Fatal(err)
+			zap.S().Fatal(err)
 		}
 	}()
 
@@ -51,7 +57,7 @@ func main() {
 	<-sig
 	fmt.Println("Shutting down...")
 	go app.Shutdown()
-	<-time.After(config.ShutdownTime)
+	<-time.After(constant.ShutdownTime)
 	fmt.Println("Running cleanup tasks...")
 	// cleanup tasks go here
 	fmt.Println("Chat server was successful shutdown.")

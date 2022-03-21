@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"time"
 
-	"learning/config"
 	"learning/internal/common/rediscache"
-	"learning/internal/logger"
+	"learning/internal/constant"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
+	"go.uber.org/zap"
 )
 
 type CustomClaims struct {
@@ -23,7 +23,7 @@ type CustomClaims struct {
 }
 
 func GetUserAccountFromCtx(c *fiber.Ctx) (string, bool) {
-	t := c.Locals(config.ContextKey)
+	t := c.Locals(constant.ContextKey)
 	if t == nil {
 		return "", false
 	}
@@ -37,7 +37,7 @@ func GetUserAccountFromCtx(c *fiber.Ctx) (string, bool) {
 }
 
 func MustGetUserAccountFromCtx(c *fiber.Ctx) string {
-	user := c.Locals(config.ContextKey).(*jwt.Token)
+	user := c.Locals(constant.ContextKey).(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	account := claims["account"].(string)
 	return account
@@ -45,36 +45,36 @@ func MustGetUserAccountFromCtx(c *fiber.Ctx) string {
 
 func GenerateToken(account string) (string, error) {
 	claims := &CustomClaims{Account: account}
-	claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(config.TokenExpireTime))
+	claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(constant.TokenExpireTime))
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(config.SigningKey))
+	return token.SignedString([]byte(constant.SigningKey))
 }
 
 func GenerateRefreshToken(account string) (string, error) {
 	id := NewNode().Generate().String()
-	err := rediscache.Set(config.RefreshTokenPrefix+id, account, config.RefreshTokenExpireTime)
+	err := rediscache.Set(constant.RefreshTokenPrefix+id, account, constant.RefreshTokenExpireTime)
 	if err != nil {
 		return "", err
 	}
 	claims := &jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(config.RefreshTokenExpireTime)),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(constant.RefreshTokenExpireTime)),
 		ID:        id,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(config.SigningKey))
+	return token.SignedString([]byte(constant.SigningKey))
 }
 
 func GenerateTokenPair(account string) (fiber.Map, error) {
 	t, err := GenerateToken(account)
 	if err != nil {
-		logger.Error("generate token error: ", err)
+		zap.S().Error("generate token error: ", err)
 		return nil, errors.New("generate token error")
 	}
 	rt, err := GenerateRefreshToken(account)
 	if err != nil {
-		logger.Error("generate refresh token error: ", err)
+		zap.S().Error("generate refresh token error: ", err)
 		return nil, errors.New("generate refresh token error")
 	}
 	return fiber.Map{"token": t, "refresh_token": rt}, nil
@@ -83,14 +83,14 @@ func GenerateTokenPair(account string) (fiber.Map, error) {
 func GenerateDisposableToken(account string) (string, error) {
 	claims := &CustomClaims{Account: account}
 	id := NewNode().Generate().String()
-	err := rediscache.Set(config.DisposableTokenPrefix+id, account, config.TokenExpireTime)
+	err := rediscache.Set(constant.DisposableTokenPrefix+id, account, constant.TokenExpireTime)
 	if err != nil {
 		return "", err
 	}
-	claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(config.TokenExpireTime))
+	claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(constant.TokenExpireTime))
 	claims.ID = id
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(config.SigningKey))
+	return token.SignedString([]byte(constant.SigningKey))
 }
 
 func VerifyToken(tokenStr string) (jwt.MapClaims, error) {
@@ -98,7 +98,7 @@ func VerifyToken(tokenStr string) (jwt.MapClaims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(config.SigningKey), nil
+		return []byte(constant.SigningKey), nil
 	})
 	if err != nil {
 		return nil, err

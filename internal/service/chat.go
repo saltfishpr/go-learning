@@ -9,14 +9,14 @@ import (
 	"errors"
 	"fmt"
 
-	"learning/config"
 	"learning/internal/common/connstorage"
+	"learning/internal/constant"
 	"learning/internal/data"
-	"learning/internal/logger"
 	"learning/internal/model"
 	"learning/internal/utils"
 
 	"github.com/jinzhu/copier"
+	"go.uber.org/zap"
 )
 
 type topic interface {
@@ -67,7 +67,7 @@ func (h hub) send(message *model.RecvMessage) error {
 
 	for _, userEntity := range userEntities {
 		if err := sendToUser(*userEntity.Account, message); err != nil {
-			logger.Error(err)
+			zap.S().Error(err)
 		}
 	}
 	return nil
@@ -86,7 +86,7 @@ func ProcessMessage(ctx context.Context, data []byte) error {
 	if err != nil {
 		return err
 	}
-	logger.Info(message)
+	zap.S().Info(message)
 	t := getTopic(message.Topic)
 	if t == nil {
 		return errors.New("wrong topic")
@@ -96,12 +96,12 @@ func ProcessMessage(ctx context.Context, data []byte) error {
 }
 
 func getTopic(topicStr string) topic {
-	switch topicStr[:config.TopicPrefixLen] {
+	switch topicStr[:constant.TopicPrefixLen] {
 	case "usr":
-		account := topicStr[config.TopicPrefixLen:]
+		account := topicStr[constant.TopicPrefixLen:]
 		return user{account: account}
 	case "hub":
-		hid := topicStr[config.TopicPrefixLen:]
+		hid := topicStr[constant.TopicPrefixLen:]
 		return hub{hid: hid}
 	default:
 		return nil

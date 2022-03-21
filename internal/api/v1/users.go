@@ -6,18 +6,18 @@ package v1
 
 import (
 	"learning/internal/constant/e"
-	"learning/internal/logger"
 	"learning/internal/model"
 	"learning/internal/service"
 	"learning/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 )
 
 func GetAllUsers(c *fiber.Ctx) error {
 	users, err := service.GetAllUsers()
 	if err != nil {
-		logger.Error("get all users error: ", err)
+		zap.S().Error("get all users error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("get all users failed")))
 	}
 
@@ -27,7 +27,7 @@ func GetAllUsers(c *fiber.Ctx) error {
 func UpdateUser(c *fiber.Ctx) error {
 	user := new(model.User)
 	if err := c.BodyParser(user); err != nil {
-		logger.Error("parse body error: ", err)
+		zap.S().Error("parse body error: ", err)
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
 	if user.Account == nil {
@@ -36,7 +36,7 @@ func UpdateUser(c *fiber.Ctx) error {
 
 	err := service.UpdateUser(user)
 	if err != nil {
-		logger.Error("update user error: ", err)
+		zap.S().Error("update user error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("update user failed")))
 	}
 
@@ -51,7 +51,7 @@ func DeleteUser(c *fiber.Ctx) error {
 
 	err := service.DeleteUserByAccount(account)
 	if err != nil {
-		logger.Error("delete user error: ", err)
+		zap.S().Error("delete user error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("delete user failed")))
 	}
 
@@ -66,7 +66,7 @@ func GetUserInfo(c *fiber.Ctx) error {
 
 	user, err := service.GetUserByAccount(account)
 	if err != nil {
-		logger.Error("get user error: ", err)
+		zap.S().Error("get user error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("get user failed")))
 	}
 
@@ -82,7 +82,7 @@ func Join(c *fiber.Ctx) error {
 	account := utils.MustGetUserAccountFromCtx(c)
 	err := service.JoinHub(account, hid)
 	if err != nil {
-		logger.Errorf("user %s join hub %s error: %s", account, hid, err)
+		zap.S().Errorf("user %s join hub %s error: %s", account, hid, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("join hub failed")))
 	}
 	return c.SendStatus(fiber.StatusOK)
@@ -110,7 +110,7 @@ func Leave(c *fiber.Ctx) error {
 	account := utils.MustGetUserAccountFromCtx(c)
 	err := service.LeaveHub(account, hid)
 	if err != nil {
-		logger.Errorf("user %s leave hub %s error: %s", account, hid, err)
+		zap.S().Errorf("user %s leave hub %s error: %s", account, hid, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("leave hub failed")))
 	}
 	return c.SendStatus(fiber.StatusOK)
@@ -125,7 +125,7 @@ func Follow(c *fiber.Ctx) error {
 	account := utils.MustGetUserAccountFromCtx(c)
 	err := service.FollowUser(account, friendAccount)
 	if err != nil {
-		logger.Errorf("user %s follow friend %s error: %s", account, friendAccount, err)
+		zap.S().Errorf("user %s follow friend %s error: %s", account, friendAccount, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("follow user failed")))
 	}
 	return c.SendStatus(fiber.StatusOK)
@@ -153,7 +153,7 @@ func Unfollow(c *fiber.Ctx) error {
 	account := utils.MustGetUserAccountFromCtx(c)
 	err := service.UnfollowUser(account, friendAccount)
 	if err != nil {
-		logger.Errorf("user %s unfollow friend %s error: %s", account, friendAccount, err)
+		zap.S().Errorf("user %s unfollow friend %s error: %s", account, friendAccount, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("unfollow user failed")))
 	}
 	return c.SendStatus(fiber.StatusOK)

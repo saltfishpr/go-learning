@@ -7,15 +7,15 @@ package v1
 import (
 	"errors"
 
-	"learning/config"
 	"learning/internal/common/rediscache"
+	"learning/internal/constant"
 	"learning/internal/constant/e"
-	"learning/internal/logger"
 	"learning/internal/model"
 	"learning/internal/service"
 	"learning/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -34,7 +34,7 @@ var validate = utils.NewValidate()
 func Login(c *fiber.Ctx) error {
 	userX := new(model.User)
 	if err := c.BodyParser(userX); err != nil {
-		logger.Error("parse body error: ", err)
+		zap.S().Error("parse body error: ", err)
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
 	err := validate.Struct(userX)
@@ -52,11 +52,11 @@ func Login(c *fiber.Ctx) error {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			if err := service.CreateUser(userX); err != nil {
-				logger.Error("create user error: ", err)
+				zap.S().Error("create user error: ", err)
 				return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.ExistAccount))
 			}
 		} else {
-			logger.Error("get user error: ", err)
+			zap.S().Error("get user error: ", err)
 			return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error))
 		}
 	} else if *(user.Password) != password {
@@ -76,11 +76,11 @@ func Refresh(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
 	}
 	var account string
-	if err := rediscache.Get(config.RefreshTokenPrefix+claims["jti"].(string), &account); err != nil {
+	if err := rediscache.Get(constant.RefreshTokenPrefix+claims["jti"].(string), &account); err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized, e.WithMessage("Invalid refresh token.")))
 	}
-	if err := rediscache.Del(config.RefreshTokenPrefix + claims["jti"].(string)); err != nil {
-		logger.Error("delete refresh token error: ", err)
+	if err := rediscache.Del(constant.RefreshTokenPrefix + claims["jti"].(string)); err != nil {
+		zap.S().Error("delete refresh token error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("Generate token failed.")))
 	}
 	data, err := utils.GenerateTokenPair(account)

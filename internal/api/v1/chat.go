@@ -9,7 +9,6 @@ import (
 
 	"learning/internal/common/connstorage"
 	"learning/internal/constant/e"
-	"learning/internal/logger"
 	"learning/internal/model"
 	"learning/internal/service"
 	"learning/internal/utils"
@@ -17,13 +16,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 	"github.com/spf13/cast"
+	"go.uber.org/zap"
 )
 
 func ChatAuth(c *fiber.Ctx) error {
 	account := utils.MustGetUserAccountFromCtx(c)
 	token, err := utils.GenerateDisposableToken(account)
 	if err != nil {
-		logger.Error("sign token error: ", err)
+		zap.S().Error("sign token error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("generate token failed")))
 	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": token})
@@ -38,7 +38,7 @@ func ChatHandler(c *websocket.Conn) {
 		messageType, message, err := c.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				logger.Error("read error: ", err)
+				zap.S().Error("read error: ", err)
 			}
 			return
 		}
@@ -47,14 +47,14 @@ func ChatHandler(c *websocket.Conn) {
 		case websocket.TextMessage:
 			err := service.ProcessMessage(context.TODO(), message)
 			if err != nil {
-				logger.Error("process message error: ", err)
+				zap.S().Error("process message error: ", err)
 				c.WriteJSON(fiber.Map{"message": err})
 			}
 		case websocket.PingMessage:
 			c.WriteMessage(websocket.PongMessage, []byte{})
 		case websocket.PongMessage:
 		default:
-			logger.Info("websocket message received of type: ", messageType)
+			zap.S().Info("websocket message received of type: ", messageType)
 		}
 	}
 }
@@ -73,7 +73,7 @@ func GetMessages(c *fiber.Ctx) error {
 	}
 	messages, err := service.GetMessagesPagination(utils.MustGetUserAccountFromCtx(c), query)
 	if err != nil {
-		logger.Error("get messages error: ", err)
+		zap.S().Error("get messages error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error)) // TODO: Add ErrorCode
 	}
 	return c.Status(fiber.StatusOK).JSON(messages)
