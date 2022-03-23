@@ -1,7 +1,7 @@
-// @description: 保存websocket连接
 // @file: storage.go
 // @date: 2021/11/21
 
+// Package connstorage 保存websocket连接.
 package connstorage
 
 import (

@@ -1,19 +1,19 @@
 // @file: middleware.go
 // @date: 2021/11/22
 
-// Package middleware 提供中间件
+// Package middleware 提供中间件.
 package middleware
 
 import (
 	"learning/internal/common/rediscache"
 	"learning/internal/constant"
 	"learning/internal/constant/e"
+	"learning/internal/log"
 	"learning/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	fiberlogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	jwtware "github.com/gofiber/jwt/v3"
@@ -27,7 +27,17 @@ var Recover = recover.New(
 	},
 )
 
-var Logger = fiberlogger.New()
+func Logger(l *log.Logger) func(*fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
+		l.Info("request",
+			zap.String("method", c.Method()),
+			zap.String("path", c.Path()),
+			zap.String("ip", c.IP()),
+			zap.String("user-agent", c.Get("User-Agent")),
+		)
+		return c.Next()
+	}
+}
 
 var Pprof = pprof.New()
 

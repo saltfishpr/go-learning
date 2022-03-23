@@ -1,4 +1,4 @@
-// @description: 从上下文获取jwt信息
+// @description: jwt token util
 // @file: jwt.go
 // @date: 2021/11/20
 

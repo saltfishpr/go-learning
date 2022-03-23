@@ -6,7 +6,7 @@ package model
 
 // Hub is a chat room that users can join and leave.
 type Hub struct {
-	HID  *string `json:"hid" validate:"required"`
+	HID  *string `json:"hid"  validate:"required"`
 	Name *string `json:"name" validate:"required"`
 	Size *int    `json:"size" validate:"required"`
 }

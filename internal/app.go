@@ -6,6 +6,8 @@ package internal
 
 import (
 	v1 "learning/internal/api/v1"
+	"learning/internal/data"
+	"learning/internal/log"
 	"learning/internal/middleware"
 	"learning/internal/utils"
 
@@ -14,21 +16,26 @@ import (
 	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
-
-// @license.name MIT
-// @license.url https://opensource.org/licenses/MIT
-
-func NewApp() *fiber.App {
+func NewApp(logger *log.Logger) *fiber.App {
 	app := fiber.New(
 		fiber.Config{
 			JSONEncoder: utils.JsonMarshal,
 			JSONDecoder: utils.JsonUnmarshal,
 		},
 	)
-	app.Use(middleware.Recover, middleware.Pprof, middleware.Logger)
+
+	conn, err := data.NewPostgres()
+	if err != nil {
+		logger.Fatal("connect to database error: ", err)
+	}
+
+	app.Use(func(c *fiber.Ctx) error {
+		c.Locals("logger", logger)
+		c.Locals("dbconn", conn)
+		return c.Next()
+	})
+
+	app.Use(middleware.Recover, middleware.Pprof, middleware.Logger(logger))
 	app.Use(middleware.CORS)
 	app.Get("/swagger/*", fiberSwagger.WrapHandler)
 	app.Post("/login", v1.Login)

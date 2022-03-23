@@ -1,4 +1,4 @@
-// @description:
+// @description: 参数校验
 // @file: validate.go
 // @date: 2021/12/21
 

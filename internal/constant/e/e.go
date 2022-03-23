@@ -1,7 +1,7 @@
 // @file: e.go
 // @date: 2021/11/25
 
-// Package e 定义错误码与错误信息
+// Package e 定义错误码与错误信息.
 package e
 
 type ErrorCode int

@@ -10,21 +10,24 @@ import (
 	"learning/internal/constant/e"
 	"learning/internal/model"
 	"learning/internal/service"
+	"learning/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
-	"go.uber.org/zap"
 )
 
 func CreateHub(c *fiber.Ctx) error {
+	logger := utils.MustGetLoggerFromContext(c)
+	conn := utils.MustGetConnectionFromContext(c)
+
 	hub := new(model.Hub)
 	if err := c.BodyParser(hub); err != nil {
-		zap.S().Error("parse body error: ", err)
+		logger.Error("parse body error: ", err)
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
 
-	err := service.CreateHub(hub)
-	if err != nil {
-		zap.S().Error("create hub error: ", err)
+	hubService := service.NewHub(conn)
+	if err := hubService.CreateHub(hub); err != nil {
+		logger.Error("create hub error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.ExistHub))
 	}
 
@@ -32,59 +35,82 @@ func CreateHub(c *fiber.Ctx) error {
 }
 
 func GetAllHubs(c *fiber.Ctx) error {
-	hubs, err := service.GetAllHubs()
+	logger := utils.MustGetLoggerFromContext(c)
+	conn := utils.MustGetConnectionFromContext(c)
+
+	hubService := service.NewHub(conn)
+	hubs, err := hubService.GetAllHubs()
 	if err != nil {
-		zap.S().Error("get hubs error: ", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("get all hubs failed")))
+		logger.Error("get hubs error: ", err)
+		return c.Status(fiber.StatusInternalServerError).
+			JSON(e.Failed(e.Error, e.WithMessage("get all hubs failed")))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(hubs)
 }
 
 func UpdateHub(c *fiber.Ctx) error {
+	logger := utils.MustGetLoggerFromContext(c)
+	conn := utils.MustGetConnectionFromContext(c)
+
 	hub := new(model.Hub)
 	if err := c.BodyParser(hub); err != nil {
-		zap.S().Error("parse body error: ", err)
+		logger.Error("parse body error: ", err)
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
 	if hub.HID == nil {
-		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
+		return c.Status(fiber.StatusBadRequest).
+			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
 	}
 
-	err := service.UpdateHub(hub)
+	hubService := service.NewHub(conn)
+	err := hubService.UpdateHub(hub)
 	if err != nil {
-		zap.S().Error("update hub error: ", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("update hub failed")))
+		logger.Error("update hub error: ", err)
+		return c.Status(fiber.StatusInternalServerError).
+			JSON(e.Failed(e.Error, e.WithMessage("update hub failed")))
 	}
 
 	return c.SendStatus(http.StatusOK)
 }
 
 func DeleteHub(c *fiber.Ctx) error {
+	logger := utils.MustGetLoggerFromContext(c)
+	conn := utils.MustGetConnectionFromContext(c)
+
 	hid := c.Query("hid")
 	if len(hid) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
+		return c.Status(fiber.StatusBadRequest).
+			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
 	}
 
-	err := service.DeleteUserByAccount(hid)
+	hubService := service.NewHub(conn)
+	err := hubService.DeleteHubByHID(hid)
 	if err != nil {
-		zap.S().Error("delete hub error: ", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("delete hub failed")))
+		logger.Error("delete hub error: ", err)
+		return c.Status(fiber.StatusInternalServerError).
+			JSON(e.Failed(e.Error, e.WithMessage("delete hub failed")))
 	}
 
 	return c.SendStatus(fiber.StatusOK)
 }
 
 func GetHubInfo(c *fiber.Ctx) error {
+	logger := utils.MustGetLoggerFromContext(c)
+	conn := utils.MustGetConnectionFromContext(c)
+
 	hid := c.Params("hid")
 	if len(hid) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
+		return c.Status(fiber.StatusBadRequest).
+			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
 	}
 
-	hub, err := service.GetHubByHID(hid)
+	hubService := service.NewHub(conn)
+	hub, err := hubService.GetHubByHID(hid)
 	if err != nil {
-		zap.S().Error("get hub error: ", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("get hub failed")))
+		logger.Error("get hub error: ", err)
+		return c.Status(fiber.StatusInternalServerError).
+			JSON(e.Failed(e.Error, e.WithMessage("get hub failed")))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(hub)

@@ -7,10 +7,10 @@ package model
 import "fmt"
 
 type RecvMessage struct {
-	From    string      `json:"from" validate:"required"`    // 发送消息的用户
-	Topic   string      `json:"topic" validate:"required"`   // 发送给谁。前缀:ID 的格式
+	From    string      `json:"from"    validate:"required"` // 发送消息的用户
+	Topic   string      `json:"topic"   validate:"required"` // 发送给谁 前缀:ID 的格式
 	Payload []byte      `json:"payload" validate:"required"` // 数据
-	Mode    PayloadMode `json:"mode" validate:"required"`    // 消息类型
+	Mode    PayloadMode `json:"mode"    validate:"required"` // 消息类型
 }
 
 func (m RecvMessage) String() string {
@@ -23,7 +23,7 @@ type SendMessage struct {
 	Mode    PayloadMode `json:"mode"`
 }
 
-type MessagesPaginationQuery struct {
+type MessagesPaginationRequest struct {
 	Topic  string
 	Offset int
 	Limit  int

@@ -6,8 +6,8 @@ package model
 
 // User .
 type User struct {
-	Account  *string `json:"account" validate:"required"`
-	Password *string `json:"password" validate:"required"`
+	Account  *string `json:"account"            validate:"required"`
+	Password *string `json:"password"           validate:"required"`
 	Phone    *string `json:"phone,omitempty"`
 	Email    *string `json:"email,omitempty"`
 	Nickname *string `json:"nickname,omitempty"`

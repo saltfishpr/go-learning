@@ -1,7 +1,7 @@
-// @description: redis 缓存
 // @file: cache.go
 // @date: 2021/12/22
 
+// Package rediscache 提供redis缓存.
 package rediscache
 
 import (

@@ -1,6 +1,7 @@
 // @file: config.go
 // @date: 2022/3/21
 
+// Package config contains the configuration for the application.
 package config
 
 import (
@@ -10,8 +11,14 @@ import (
 
 // Config represents the main config for the application.
 type Config struct {
-	NodeID   int64  `mapstructure:"node_id"`
-	Database string `mapstructure:"database"`
+	NodeID   int64 `mapstructure:"node_id"`
+	Postgres struct {
+		Host     string `mapstructure:"host"`
+		Port     int    `mapstructure:"port"`
+		User     string `mapstructure:"user"`
+		Password string `mapstructure:"password"`
+		DBName   string `mapstructure:"db_name"`
+	} `mapstructure:"postgres"`
 }
 
 // Init loads config.

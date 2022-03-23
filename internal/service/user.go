@@ -1,4 +1,4 @@
-// @description:
+// @description: 用户服务
 // @file: user.go
 // @date: 2021/11/22
 
@@ -11,14 +11,42 @@ import (
 	"github.com/jinzhu/copier"
 )
 
-func CreateUser(user *model.User) error {
-	userEntity := new(data.User)
-	copier.Copy(userEntity, user)
-	return data.CreateUser(userEntity)
+type User struct {
+	conn data.Connection
 }
 
-func GetAllUsers() ([]*model.User, error) {
-	userEntities, err := data.GetAllUsers()
+func NewUser(conn data.Connection) *User {
+	return &User{conn: conn}
+}
+
+func (u *User) CreateUser(user *model.User) error {
+	userEntity := new(data.User)
+	copier.Copy(userEntity, user)
+	return u.conn.CreateUser(userEntity)
+}
+
+func (u *User) GetUserByAccount(account string) (*model.User, error) {
+	userEntity, err := u.conn.GetUserByAccount(account)
+	if err != nil {
+		return nil, err
+	}
+	user := new(model.User)
+	copier.Copy(user, userEntity)
+	return user, nil
+}
+
+func (u *User) UpdateUser(user *model.User) error {
+	userEntity := new(data.User)
+	copier.Copy(userEntity, user)
+	return u.conn.UpdateUser(userEntity)
+}
+
+func (u *User) DeleteUserByAccount(account string) error {
+	return u.conn.DeleteUserByAccount(account)
+}
+
+func (u *User) GetUserList() ([]*model.User, error) {
+	userEntities, err := u.conn.GetAllUsers()
 	if err != nil {
 		return nil, err
 	}
@@ -28,48 +56,41 @@ func GetAllUsers() ([]*model.User, error) {
 	return users, nil
 }
 
-func UpdateUser(user *model.User) error {
-	userEntity := new(data.User)
-	copier.Copy(userEntity, user)
-	return data.UpdateUser(userEntity)
-}
-
-func DeleteUserByAccount(account string) error {
-	return data.DeleteUserByAccount(account)
-}
-
-func GetUserByAccount(account string) (*model.User, error) {
-	userEntity, err := data.GetUserByAccount(account)
-	if err != nil {
-		return nil, err
-	}
-	user := new(model.User)
-	copier.Copy(user, userEntity)
-
-	return user, nil
-}
-
-func JoinHub(account string, hid string) error {
-	userEntity, err := data.GetUserByAccount(account)
+func (u *User) JoinHub(account string, hid string) error {
+	userEntity, err := u.conn.GetUserByAccount(account)
 	if err != nil {
 		return err
 	}
 
-	hubEntity, err := data.GetHubByHID(hid)
+	hubEntity, err := u.conn.GetHubByHID(hid)
 	if err != nil {
 		return err
 	}
 
-	return data.JoinHub(userEntity, hubEntity)
+	return u.conn.UserJoinHub(userEntity, hubEntity)
 }
 
-func GetJoinedHubs(account string) ([]*model.Hub, error) {
-	userEntity, err := data.GetUserByAccount(account)
+func (u *User) LeaveHub(account string, hid string) error {
+	userEntity, err := u.conn.GetUserByAccount(account)
+	if err != nil {
+		return err
+	}
+
+	hubEntity, err := u.conn.GetHubByHID(hid)
+	if err != nil {
+		return err
+	}
+
+	return u.conn.UserLeaveHub(userEntity, hubEntity)
+}
+
+func (u *User) GetJoinedHubs(account string) ([]*model.Hub, error) {
+	userEntity, err := u.conn.GetUserByAccount(account)
 	if err != nil {
 		return nil, err
 	}
 
-	hubEntities, err := data.GetJoinedHubs(userEntity)
+	hubEntities, err := u.conn.GetUserJoinedHubs(userEntity)
 	if err != nil {
 		return nil, err
 	}
@@ -79,41 +100,41 @@ func GetJoinedHubs(account string) ([]*model.Hub, error) {
 	return hubs, nil
 }
 
-func LeaveHub(account string, hid string) error {
-	userEntity, err := data.GetUserByAccount(account)
+func (u *User) FollowUser(account string, friendAccount string) error {
+	userEntity, err := u.conn.GetUserByAccount(account)
 	if err != nil {
 		return err
 	}
 
-	hubEntity, err := data.GetHubByHID(hid)
+	friendEntity, err := u.conn.GetUserByAccount(friendAccount)
 	if err != nil {
 		return err
 	}
 
-	return data.LeaveHub(userEntity, hubEntity)
+	return u.conn.UserFollowUser(userEntity, friendEntity)
 }
 
-func FollowUser(account string, friendAccount string) error {
-	userEntity, err := data.GetUserByAccount(account)
+func (u *User) UnfollowUser(account string, friendAccount string) error {
+	userEntity, err := u.conn.GetUserByAccount(account)
 	if err != nil {
 		return err
 	}
 
-	friendEntity, err := data.GetUserByAccount(friendAccount)
+	friendEntity, err := u.conn.GetUserByAccount(friendAccount)
 	if err != nil {
 		return err
 	}
 
-	return data.FollowUser(userEntity, friendEntity)
+	return u.conn.UserUnfollowUser(userEntity, friendEntity)
 }
 
-func GetFollowingUsers(account string) ([]*model.User, error) {
-	userEntity, err := data.GetUserByAccount(account)
+func (u *User) GetFollowingUsers(account string) ([]*model.User, error) {
+	userEntity, err := u.conn.GetUserByAccount(account)
 	if err != nil {
 		return nil, err
 	}
 
-	friendEntities, err := data.GetFollowingUsers(userEntity)
+	friendEntities, err := u.conn.GetUserFollowingUsers(userEntity)
 	if err != nil {
 		return nil, err
 	}
@@ -121,18 +142,4 @@ func GetFollowingUsers(account string) ([]*model.User, error) {
 	copier.Copy(&friends, &friendEntities)
 
 	return friends, nil
-}
-
-func UnfollowUser(account string, friendAccount string) error {
-	userEntity, err := data.GetUserByAccount(account)
-	if err != nil {
-		return err
-	}
-
-	friendEntity, err := data.GetUserByAccount(friendAccount)
-	if err != nil {
-		return err
-	}
-
-	return data.UnfollowUser(userEntity, friendEntity)
 }

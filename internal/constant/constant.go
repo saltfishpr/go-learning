@@ -1,7 +1,7 @@
-// @description: 常量配置。
 // @file: constant.go
 // @date: 2021/11/2
 
+// Package constant 常量配置.
 package constant
 
 import "time"

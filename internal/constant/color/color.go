@@ -1,7 +1,7 @@
 // @file: color.go
 // @date: 2021/11/25
 
-// Package color 终端彩色输出的控制字符
+// Package color 终端彩色输出的控制字符.
 package color
 
 type Color string

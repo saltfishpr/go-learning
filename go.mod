@@ -18,10 +18,8 @@ require (
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/viper v1.10.1
 	github.com/swaggo/fiber-swagger v1.0.3
-	github.com/swaggo/swag v1.7.8
 	go.uber.org/zap v1.20.0
 	gorm.io/driver/postgres v1.2.3
-	gorm.io/driver/sqlite v1.2.6
 	gorm.io/gorm v1.22.5
 	gorm.io/plugin/soft_delete v1.0.5
 )
@@ -57,7 +55,6 @@ require (
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
-	github.com/mattn/go-sqlite3 v1.14.9 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
@@ -68,6 +65,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2 // indirect
+	github.com/swaggo/swag v1.7.8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.31.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
@@ -85,4 +83,5 @@ require (
 	golang.org/x/tools v0.1.7 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gorm.io/driver/sqlite v1.2.6 // indirect
 )

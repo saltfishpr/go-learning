@@ -24,7 +24,8 @@ func ChatAuth(c *fiber.Ctx) error {
 	token, err := utils.GenerateDisposableToken(account)
 	if err != nil {
 		zap.S().Error("sign token error: ", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error, e.WithMessage("generate token failed")))
+		return c.Status(fiber.StatusInternalServerError).
+			JSON(e.Failed(e.Error, e.WithMessage("generate token failed")))
 	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": token})
 }
@@ -37,7 +38,11 @@ func ChatHandler(c *websocket.Conn) {
 	for {
 		messageType, message, err := c.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			if websocket.IsUnexpectedCloseError(
+				err,
+				websocket.CloseGoingAway,
+				websocket.CloseAbnormalClosure,
+			) {
 				zap.S().Error("read error: ", err)
 			}
 			return
@@ -66,7 +71,7 @@ func GetMessages(c *fiber.Ctx) error {
 	if len(topic) == 0 || len(offset) == 0 || len(limit) == 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
-	query := &model.MessagesPaginationQuery{
+	query := &model.MessagesPaginationRequest{
 		Topic:  topic,
 		Offset: cast.ToInt(offset),
 		Limit:  cast.ToInt(limit),
@@ -74,7 +79,9 @@ func GetMessages(c *fiber.Ctx) error {
 	messages, err := service.GetMessagesPagination(utils.MustGetUserAccountFromCtx(c), query)
 	if err != nil {
 		zap.S().Error("get messages error: ", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error)) // TODO: Add ErrorCode
+		return c.Status(fiber.StatusInternalServerError).
+			JSON(e.Failed(e.Error))
+		// TODO: Add ErrorCode
 	}
 	return c.Status(fiber.StatusOK).JSON(messages)
 }
