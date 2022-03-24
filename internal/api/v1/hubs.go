@@ -34,19 +34,25 @@ func CreateHub(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusCreated)
 }
 
-func GetAllHubs(c *fiber.Ctx) error {
+func GetHub(c *fiber.Ctx) error {
 	logger := utils.MustGetLoggerFromContext(c)
 	conn := utils.MustGetConnectionFromContext(c)
 
-	hubService := service.NewHub(conn)
-	hubs, err := hubService.GetAllHubs()
-	if err != nil {
-		logger.Error("get hubs error: ", err)
-		return c.Status(fiber.StatusInternalServerError).
-			JSON(e.Failed(e.Error, e.WithMessage("get all hubs failed")))
+	hid := c.Params("hid")
+	if len(hid) == 0 {
+		return c.Status(fiber.StatusBadRequest).
+			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
 	}
 
-	return c.Status(fiber.StatusOK).JSON(hubs)
+	hubService := service.NewHub(conn)
+	hub, err := hubService.GetHubByHID(hid)
+	if err != nil {
+		logger.Error("get hub error: ", err)
+		return c.Status(fiber.StatusInternalServerError).
+			JSON(e.Failed(e.Error, e.WithMessage("get hub failed")))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(hub)
 }
 
 func UpdateHub(c *fiber.Ctx) error {
@@ -58,7 +64,8 @@ func UpdateHub(c *fiber.Ctx) error {
 		logger.Error("parse body error: ", err)
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
-	if hub.HID == nil {
+	hid := c.Params("hid")
+	if len(hid) == 0 {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
 	}
@@ -78,7 +85,7 @@ func DeleteHub(c *fiber.Ctx) error {
 	logger := utils.MustGetLoggerFromContext(c)
 	conn := utils.MustGetConnectionFromContext(c)
 
-	hid := c.Query("hid")
+	hid := c.Params("hid")
 	if len(hid) == 0 {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
@@ -95,23 +102,17 @@ func DeleteHub(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
-func GetHubInfo(c *fiber.Ctx) error {
+func GetHubs(c *fiber.Ctx) error {
 	logger := utils.MustGetLoggerFromContext(c)
 	conn := utils.MustGetConnectionFromContext(c)
 
-	hid := c.Params("hid")
-	if len(hid) == 0 {
-		return c.Status(fiber.StatusBadRequest).
-			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
-	}
-
 	hubService := service.NewHub(conn)
-	hub, err := hubService.GetHubByHID(hid)
+	hubs, err := hubService.GetAllHubs()
 	if err != nil {
-		logger.Error("get hub error: ", err)
+		logger.Error("get hubs error: ", err)
 		return c.Status(fiber.StatusInternalServerError).
-			JSON(e.Failed(e.Error, e.WithMessage("get hub failed")))
+			JSON(e.Failed(e.Error, e.WithMessage("get all hubs failed")))
 	}
 
-	return c.Status(fiber.StatusOK).JSON(hub)
+	return c.Status(fiber.StatusOK).JSON(hubs)
 }

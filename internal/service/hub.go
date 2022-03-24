@@ -27,14 +27,15 @@ func (h *Hub) CreateHub(hub *model.Hub) error {
 	return h.conn.CreateHub(hubEntity)
 }
 
-func (h *Hub) GetAllHubs() ([]*model.Hub, error) {
-	hubEntities, err := h.conn.GetAllHubs()
+func (h *Hub) GetHubByHID(hid string) (*model.Hub, error) {
+	hubEntity, err := h.conn.GetHubByHID(hid)
 	if err != nil {
 		return nil, err
 	}
-	hubs := make([]*model.Hub, len(hubEntities))
-	copier.Copy(&hubs, &hubEntities)
-	return hubs, nil
+	hub := new(model.Hub)
+	copier.Copy(hub, hubEntity)
+
+	return hub, nil
 }
 
 func (h *Hub) UpdateHub(hub *model.Hub) error {
@@ -47,13 +48,12 @@ func (h *Hub) DeleteHubByHID(hid string) error {
 	return h.conn.DeleteHubByHID(hid)
 }
 
-func (h *Hub) GetHubByHID(hid string) (*model.Hub, error) {
-	hubEntity, err := h.conn.GetHubByHID(hid)
+func (h *Hub) GetAllHubs() ([]*model.Hub, error) {
+	hubEntities, err := h.conn.GetAllHubs()
 	if err != nil {
 		return nil, err
 	}
-	hub := new(model.Hub)
-	copier.Copy(hub, hubEntity)
-
-	return hub, nil
+	hubs := make([]*model.Hub, len(hubEntities))
+	copier.Copy(&hubs, &hubEntities)
+	return hubs, nil
 }

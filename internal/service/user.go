@@ -45,7 +45,7 @@ func (u *User) DeleteUserByAccount(account string) error {
 	return u.conn.DeleteUserByAccount(account)
 }
 
-func (u *User) GetUserList() ([]*model.User, error) {
+func (u *User) GetAllUsers() ([]*model.User, error) {
 	userEntities, err := u.conn.GetAllUsers()
 	if err != nil {
 		return nil, err
