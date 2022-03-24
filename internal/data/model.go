@@ -21,7 +21,7 @@ type User struct {
 	Base
 	DeletedAt soft_delete.DeletedAt `gorm:"uniqueIndex:user_udx_delete"`
 
-	Account  *string `gorm:"size:32;not null;uniqueIndex:user_udx_delete"`
+	Username *string `gorm:"size:32;not null;uniqueIndex:user_udx_delete"`
 	Password *string `gorm:"size:32;not null"`
 	Phone    *string `gorm:"size:32"`
 	Email    *string `gorm:"size:32"`

@@ -21,14 +21,14 @@ func GetUser(c *fiber.Ctx) error {
 	logger := utils.MustGetLoggerFromContext(c)
 	conn := utils.MustGetConnectionFromContext(c)
 
-	account := c.Params("account")
-	if len(account) == 0 {
+	username := c.Params("username")
+	if len(username) == 0 {
 		return c.Status(fiber.StatusBadRequest).
-			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing account")))
+			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing username")))
 	}
 
 	userService := service.NewUser(conn)
-	user, err := userService.GetUserByAccount(account)
+	user, err := userService.GetUserByUsername(username)
 	if err != nil {
 		logger.Error("get user error: ", err)
 		return c.Status(fiber.StatusInternalServerError).
@@ -47,10 +47,10 @@ func UpdateUser(c *fiber.Ctx) error {
 		logger.Error("parse body error: ", err)
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
-	account := c.Params("account")
-	if len(account) == 0 {
+	username := c.Params("username")
+	if len(username) == 0 {
 		return c.Status(fiber.StatusBadRequest).
-			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing account")))
+			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing username")))
 	}
 	userService := service.NewUser(conn)
 	err := userService.UpdateUser(user)
@@ -67,13 +67,13 @@ func DeleteUser(c *fiber.Ctx) error {
 	logger := utils.MustGetLoggerFromContext(c)
 	conn := utils.MustGetConnectionFromContext(c)
 
-	account := c.Params("account")
-	if len(account) == 0 {
+	username := c.Params("username")
+	if len(username) == 0 {
 		return c.Status(fiber.StatusBadRequest).
-			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing account")))
+			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing username")))
 	}
 	userService := service.NewUser(conn)
-	err := userService.DeleteUserByAccount(account)
+	err := userService.DeleteUserByUsername(username)
 	if err != nil {
 		logger.Error("delete user error: ", err)
 		return c.Status(fiber.StatusInternalServerError).
@@ -108,12 +108,12 @@ func Join(c *fiber.Ctx) error {
 			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
 	}
 
-	account := utils.MustGetUserAccountFromCtx(c)
+	username := utils.MustGetUsernameFromCtx(c)
 
 	userService := service.NewUser(conn)
-	err := userService.JoinHub(account, hid)
+	err := userService.JoinHub(username, hid)
 	if err != nil {
-		logger.Errorf("user %s join hub %s error: %s", account, hid, err)
+		logger.Errorf("user %s join hub %s error: %s", username, hid, err)
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(e.Failed(e.Error, e.WithMessage("join hub failed")))
 	}
@@ -130,12 +130,12 @@ func Leave(c *fiber.Ctx) error {
 			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
 	}
 
-	account := utils.MustGetUserAccountFromCtx(c)
+	username := utils.MustGetUsernameFromCtx(c)
 
 	userService := service.NewUser(conn)
-	err := userService.LeaveHub(account, hid)
+	err := userService.LeaveHub(username, hid)
 	if err != nil {
-		logger.Errorf("user %s leave hub %s error: %s", account, hid, err)
+		logger.Errorf("user %s leave hub %s error: %s", username, hid, err)
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(e.Failed(e.Error, e.WithMessage("leave hub failed")))
 	}
@@ -145,10 +145,10 @@ func Leave(c *fiber.Ctx) error {
 func Joined(c *fiber.Ctx) error {
 	conn := utils.MustGetConnectionFromContext(c)
 
-	account := utils.MustGetUserAccountFromCtx(c)
+	username := utils.MustGetUsernameFromCtx(c)
 
 	userService := service.NewUser(conn)
-	hubs, err := userService.GetJoinedHubs(account)
+	hubs, err := userService.GetJoinedHubs(username)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
 			e.Failed(
@@ -163,18 +163,18 @@ func Follow(c *fiber.Ctx) error {
 	logger := utils.MustGetLoggerFromContext(c)
 	conn := utils.MustGetConnectionFromContext(c)
 
-	friendAccount := c.Query("account")
-	if len(friendAccount) == 0 {
+	username := c.Query("username")
+	if len(username) == 0 {
 		return c.Status(fiber.StatusBadRequest).
-			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing account")))
+			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing username")))
 	}
 
-	account := utils.MustGetUserAccountFromCtx(c)
+	curUsername := utils.MustGetUsernameFromCtx(c)
 
 	userService := service.NewUser(conn)
-	err := userService.FollowUser(account, friendAccount)
+	err := userService.FollowUser(curUsername, username)
 	if err != nil {
-		logger.Errorf("user %s follow friend %s error: %s", account, friendAccount, err)
+		logger.Errorf("user %s follow friend %s error: %s", curUsername, username, err)
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(e.Failed(e.Error, e.WithMessage("follow user failed")))
 	}
@@ -185,18 +185,18 @@ func Unfollow(c *fiber.Ctx) error {
 	logger := utils.MustGetLoggerFromContext(c)
 	conn := utils.MustGetConnectionFromContext(c)
 
-	friendAccount := c.Query("account")
-	if len(friendAccount) == 0 {
+	username := c.Query("username")
+	if len(username) == 0 {
 		return c.Status(fiber.StatusBadRequest).
-			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing account")))
+			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing username")))
 	}
 
-	account := utils.MustGetUserAccountFromCtx(c)
+	curUsername := utils.MustGetUsernameFromCtx(c)
 
 	userService := service.NewUser(conn)
-	err := userService.UnfollowUser(account, friendAccount)
+	err := userService.UnfollowUser(curUsername, username)
 	if err != nil {
-		logger.Errorf("user %s unfollow friend %s error: %s", account, friendAccount, err)
+		logger.Errorf("user %s unfollow friend %s error: %s", curUsername, username, err)
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(e.Failed(e.Error, e.WithMessage("unfollow user failed")))
 	}
@@ -206,10 +206,10 @@ func Unfollow(c *fiber.Ctx) error {
 func Following(c *fiber.Ctx) error {
 	conn := utils.MustGetConnectionFromContext(c)
 
-	account := utils.MustGetUserAccountFromCtx(c)
+	username := utils.MustGetUsernameFromCtx(c)
 
 	userService := service.NewUser(conn)
-	friends, err := userService.GetFollowingUsers(account)
+	friends, err := userService.GetFollowingUsers(username)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(
 			e.Failed(

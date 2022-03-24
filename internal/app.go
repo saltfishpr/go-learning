@@ -27,6 +27,9 @@ func NewApp(logger *log.Logger) *fiber.App {
 	if err != nil {
 		logger.Fatal("connect to database error: ", err)
 	}
+	if ok, err := conn.IsConnected(); !ok || err != nil {
+		logger.Fatal("ping database error: ", err)
+	}
 
 	app.Use(func(c *fiber.Ctx) error {
 		c.Locals("logger", logger)
@@ -50,19 +53,19 @@ func NewApp(logger *log.Logger) *fiber.App {
 		apiV1.Delete("/hubs/:hid", v1.DeleteHub) // 删除群组
 		apiV1.Get("/hubs/items", v1.GetHubs)     // 获取群组列表
 
-		apiV1.Post("/users", v1.CreateUser)            // 创建用户
-		apiV1.Get("/users/:account", v1.GetUser)       // 获取用户信息
-		apiV1.Put("/users/:account", v1.UpdateUser)    // 更新用户信息
-		apiV1.Delete("/users/:account", v1.DeleteUser) // 删除用户
-		apiV1.Get("/users/items", v1.GetUsers)         // 获取用户列表
+		apiV1.Post("/users", v1.CreateUser)             // 创建用户
+		apiV1.Get("/users/:username", v1.GetUser)       // 获取用户信息
+		apiV1.Put("/users/:username", v1.UpdateUser)    // 更新用户信息
+		apiV1.Delete("/users/:username", v1.DeleteUser) // 删除用户
+		apiV1.Get("/users/items", v1.GetUsers)          // 获取用户列表
 
-		apiV1.Put("/hub/:hid/members/:account", v1.Join)     // 加入群组
-		apiV1.Delete("/hub/:hid/members/:account", v1.Leave) // 离开群组
-		apiV1.Get("/hub/:hid/members", v1.Joined)            // 查询群组成员
+		apiV1.Put("/hub/:hid/members/:username", v1.Join)     // 加入群组
+		apiV1.Delete("/hub/:hid/members/:username", v1.Leave) // 离开群组
+		apiV1.Get("/hub/:hid/members", v1.Joined)             // 查询群组成员
 
-		apiV1.Put("/user/following/:account", v1.Follow)      // 关注
-		apiV1.Delete("/user/following/:account", v1.Unfollow) // 取消关注
-		apiV1.Get("/user/following", v1.Following)            // 查询关注
+		apiV1.Put("/user/following/:username", v1.Follow)      // 关注
+		apiV1.Delete("/user/following/:username", v1.Unfollow) // 取消关注
+		apiV1.Get("/user/following", v1.Following)             // 查询关注
 
 		apiV1.Get("/chat/auth", v1.ChatAuth)               // 聊天验证
 		apiV1.Get("/chat/:topic/messages", v1.GetMessages) // 获取聊天记录

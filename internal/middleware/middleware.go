@@ -63,17 +63,17 @@ var WebSocket = func(c *fiber.Ctx) error {
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
 		}
-		var account string
+		var username string
 		if err := rediscache.Get(
-			constant.DisposableTokenPrefix+claims["jti"].(string), &account,
-		); err != nil || claims["account"].(string) != account {
+			constant.DisposableTokenPrefix+claims["jti"].(string), &username,
+		); err != nil || claims["username"].(string) != username {
 			return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
 		}
 		if err := rediscache.Del(constant.DisposableTokenPrefix + claims["jti"].(string)); err != nil {
 			zap.S().Error("delete disposable token error: ", err)
 			return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error))
 		}
-		c.Locals("account", account)
+		c.Locals("username", username)
 		return c.Next()
 	}
 	return c.SendStatus(fiber.StatusUpgradeRequired)

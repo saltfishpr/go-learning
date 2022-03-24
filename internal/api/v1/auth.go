@@ -34,19 +34,19 @@ func Login(c *fiber.Ctx) error {
 		utils.LogValidateErrors(err)
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
-	account := *userX.Account
+	username := *userX.Username
 	password := *userX.Password
 	if userX.Nickname == nil {
-		userX.Nickname = userX.Account
+		userX.Nickname = userX.Username
 	}
 
 	userService := service.NewUser(conn)
-	user, err := userService.GetUserByAccount(account)
+	user, err := userService.GetUserByUsername(username)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			if err := userService.CreateUser(userX); err != nil {
 				logger.Error("create user error: ", err)
-				return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.ExistAccount))
+				return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.ExistUsername))
 			}
 		} else {
 			logger.Error("get user error: ", err)
@@ -56,7 +56,7 @@ func Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.LoginFailed))
 	}
 
-	t, err := utils.GenerateTokenPair(account)
+	t, err := utils.GenerateTokenPair(username)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(e.Failed(e.Error, e.WithMessage("Generate token failed.")))
@@ -71,8 +71,8 @@ func Refresh(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
 	}
-	var account string
-	if err := rediscache.Get(constant.RefreshTokenPrefix+claims["jti"].(string), &account); err != nil {
+	var username string
+	if err := rediscache.Get(constant.RefreshTokenPrefix+claims["jti"].(string), &username); err != nil {
 		return c.Status(fiber.StatusUnauthorized).
 			JSON(e.Failed(e.Unauthorized, e.WithMessage("Invalid refresh token.")))
 	}
@@ -81,7 +81,7 @@ func Refresh(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(e.Failed(e.Error, e.WithMessage("Generate token failed.")))
 	}
-	t, err := utils.GenerateTokenPair(account)
+	t, err := utils.GenerateTokenPair(username)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(e.Failed(e.Error, e.WithMessage("Generate token failed.")))

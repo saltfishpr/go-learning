@@ -24,6 +24,7 @@ func NewHub(conn data.Connection) *Hub {
 func (h *Hub) CreateHub(hub *model.Hub) error {
 	hubEntity := new(data.Hub)
 	copier.Copy(hubEntity, hub)
+
 	return h.conn.CreateHub(hubEntity)
 }
 
@@ -41,6 +42,7 @@ func (h *Hub) GetHubByHID(hid string) (*model.Hub, error) {
 func (h *Hub) UpdateHub(hub *model.Hub) error {
 	hubEntity := new(data.Hub)
 	copier.Copy(hubEntity, hub)
+
 	return h.conn.UpdateHub(hubEntity)
 }
 
@@ -55,5 +57,6 @@ func (h *Hub) GetAllHubs() ([]*model.Hub, error) {
 	}
 	hubs := make([]*model.Hub, len(hubEntities))
 	copier.Copy(&hubs, &hubEntities)
+
 	return hubs, nil
 }

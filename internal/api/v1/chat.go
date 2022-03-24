@@ -20,8 +20,8 @@ import (
 )
 
 func ChatAuth(c *fiber.Ctx) error {
-	account := utils.MustGetUserAccountFromCtx(c)
-	token, err := utils.GenerateDisposableToken(account)
+	username := utils.MustGetUsernameFromCtx(c)
+	token, err := utils.GenerateDisposableToken(username)
 	if err != nil {
 		zap.S().Error("sign token error: ", err)
 		return c.Status(fiber.StatusInternalServerError).
@@ -31,9 +31,9 @@ func ChatAuth(c *fiber.Ctx) error {
 }
 
 func ChatHandler(c *websocket.Conn) {
-	account := c.Locals("account").(string)
-	connstorage.Set(account, c)
-	defer connstorage.Del(account)
+	username := c.Locals("username").(string)
+	connstorage.Set(username, c)
+	defer connstorage.Del(username)
 
 	for {
 		messageType, message, err := c.ReadMessage()
@@ -76,7 +76,7 @@ func GetMessages(c *fiber.Ctx) error {
 		Offset: cast.ToInt(offset),
 		Limit:  cast.ToInt(limit),
 	}
-	messages, err := service.GetMessagesPagination(utils.MustGetUserAccountFromCtx(c), query)
+	messages, err := service.GetMessagesPagination(utils.MustGetUsernameFromCtx(c), query)
 	if err != nil {
 		zap.S().Error("get messages error: ", err)
 		return c.Status(fiber.StatusInternalServerError).

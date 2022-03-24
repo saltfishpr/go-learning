@@ -22,39 +22,39 @@ type topic interface {
 	send(*model.RecvMessage) error
 }
 
-type user struct {
-	account string
+type userTopic struct {
+	username string
 }
 
-func (u user) auth(s string) bool {
+func (u userTopic) auth(s string) bool {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (u user) send(message *model.RecvMessage) error {
+func (u userTopic) send(message *model.RecvMessage) error {
 	// TODO implement me
 	panic("implement me")
 }
 
-type hub struct {
+type hubTopic struct {
 	hid string
 }
 
-func (h hub) auth(s string) bool {
+func (h hubTopic) auth(s string) bool {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (h hub) send(message *model.RecvMessage) error {
+func (h hubTopic) send(message *model.RecvMessage) error {
 	// TODO implement me
 	panic("implement me")
 }
 
-func sendToUser(account string, message *model.RecvMessage) error {
-	if connection, ok := connstorage.Get(account); ok {
+func sendToUser(username string, message *model.RecvMessage) error {
+	if connection, ok := connstorage.Get(username); ok {
 		return connection.WriteJSON(message)
 	}
-	return fmt.Errorf("%s is offline", account)
+	return fmt.Errorf("%s is offline", username)
 }
 
 func ProcessMessage(ctx context.Context, data []byte) error {
@@ -75,18 +75,18 @@ func ProcessMessage(ctx context.Context, data []byte) error {
 func getTopic(topicStr string) topic {
 	switch topicStr[:constant.TopicPrefixLen] {
 	case "usr":
-		account := topicStr[constant.TopicPrefixLen:]
-		return user{account: account}
+		username := topicStr[constant.TopicPrefixLen:]
+		return userTopic{username: username}
 	case "hub":
 		hid := topicStr[constant.TopicPrefixLen:]
-		return hub{hid: hid}
+		return hubTopic{hid: hid}
 	default:
 		return nil
 	}
 }
 
 func GetMessagesPagination(
-	account string,
+	username string,
 	query *model.MessagesPaginationRequest,
 ) (*model.MessagesPaginationResponse, error) {
 	return nil, nil

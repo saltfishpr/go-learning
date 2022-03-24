@@ -18,9 +18,9 @@ type Connection interface {
 	IsConnected() (bool, error)
 
 	CreateUser(user *User) error
-	GetUserByAccount(account string) (*User, error)
+	GetUserByUsername(username string) (*User, error)
 	UpdateUser(user *User) error
-	DeleteUserByAccount(account string) error
+	DeleteUserByUsername(username string) error
 	GetAllUsers() ([]*User, error)
 
 	UserJoinHub(user *User, hub *Hub) error
@@ -81,9 +81,9 @@ func (p *Postgres) CreateUser(user *User) error {
 	return p.db.Create(user).Error
 }
 
-func (p *Postgres) GetUserByAccount(account string) (*User, error) {
+func (p *Postgres) GetUserByUsername(username string) (*User, error) {
 	var user User
-	err := p.db.Where("account = ?", account).First(&user).Error
+	err := p.db.Where("username = ?", username).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -91,11 +91,11 @@ func (p *Postgres) GetUserByAccount(account string) (*User, error) {
 }
 
 func (p *Postgres) UpdateUser(user *User) error {
-	return p.db.Model(user).Where("account = ?", user.Account).Updates(user).Error
+	return p.db.Model(user).Where("username = ?", user.Username).Updates(user).Error
 }
 
-func (p *Postgres) DeleteUserByAccount(account string) error {
-	return p.db.Where("account = ?", account).Delete(&User{}).Error
+func (p *Postgres) DeleteUserByUsername(username string) error {
+	return p.db.Where("username = ?", username).Delete(&User{}).Error
 }
 
 func (p *Postgres) GetAllUsers() ([]*User, error) {

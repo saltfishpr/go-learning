@@ -11,17 +11,17 @@ import (
 
 var switchboard = cmap.New()
 
-func Set(account string, conn *websocket.Conn) {
-	switchboard.Set(account, conn)
+func Set(username string, conn *websocket.Conn) {
+	switchboard.Set(username, conn)
 }
 
-func Get(account string) (*websocket.Conn, bool) {
-	if conn, ok := switchboard.Get(account); ok {
+func Get(username string) (*websocket.Conn, bool) {
+	if conn, ok := switchboard.Get(username); ok {
 		return conn.(*websocket.Conn), true
 	}
 	return nil, false
 }
 
-func Del(account string) {
-	switchboard.Remove(account)
+func Del(username string) {
+	switchboard.Remove(username)
 }

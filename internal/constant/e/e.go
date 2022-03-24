@@ -14,7 +14,7 @@ const (
 	ExistHub
 	HubNotFound
 
-	ExistAccount
+	ExistUsername
 	LoginFailed
 	TokenParseFailed
 )
@@ -25,8 +25,8 @@ var errorMessage = map[ErrorCode]string{
 	InvalidParams:    "invalid params",
 	ExistHub:         "hub already exists",
 	HubNotFound:      "no such hub",
-	ExistAccount:     "account already exists",
-	LoginFailed:      "wrong account or password",
+	ExistUsername:    "username already exists",
+	LoginFailed:      "wrong username or password",
 	TokenParseFailed: "parse token error",
 }
 

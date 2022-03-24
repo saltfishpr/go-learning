@@ -19,10 +19,10 @@ import (
 
 type CustomClaims struct {
 	jwt.RegisteredClaims
-	Account string `json:"account"`
+	Username string `json:"username"`
 }
 
-func GetUserAccountFromCtx(c *fiber.Ctx) (string, bool) {
+func GetUsernameFromCtx(c *fiber.Ctx) (string, bool) {
 	t := c.Locals(constant.ContextKey)
 	if t == nil {
 		return "", false
@@ -32,28 +32,28 @@ func GetUserAccountFromCtx(c *fiber.Ctx) (string, bool) {
 	if !ok {
 		return "", ok
 	}
-	account, ok := claims["account"].(string)
-	return account, ok
+	username, ok := claims["username"].(string)
+	return username, ok
 }
 
-func MustGetUserAccountFromCtx(c *fiber.Ctx) string {
+func MustGetUsernameFromCtx(c *fiber.Ctx) string {
 	user := c.Locals(constant.ContextKey).(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
-	account := claims["account"].(string)
-	return account
+	username := claims["username"].(string)
+	return username
 }
 
-func GenerateToken(account string) (string, error) {
-	claims := &CustomClaims{Account: account}
+func GenerateToken(username string) (string, error) {
+	claims := &CustomClaims{Username: username}
 	claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(constant.TokenExpireTime))
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(constant.SigningKey))
 }
 
-func GenerateRefreshToken(account string) (string, error) {
+func GenerateRefreshToken(username string) (string, error) {
 	id := NewNode().Generate().String()
-	err := rediscache.Set(constant.RefreshTokenPrefix+id, account, constant.RefreshTokenExpireTime)
+	err := rediscache.Set(constant.RefreshTokenPrefix+id, username, constant.RefreshTokenExpireTime)
 	if err != nil {
 		return "", err
 	}
@@ -66,13 +66,13 @@ func GenerateRefreshToken(account string) (string, error) {
 	return token.SignedString([]byte(constant.SigningKey))
 }
 
-func GenerateTokenPair(account string) (fiber.Map, error) {
-	t, err := GenerateToken(account)
+func GenerateTokenPair(username string) (fiber.Map, error) {
+	t, err := GenerateToken(username)
 	if err != nil {
 		zap.S().Error("generate token error: ", err)
 		return nil, errors.New("generate token error")
 	}
-	rt, err := GenerateRefreshToken(account)
+	rt, err := GenerateRefreshToken(username)
 	if err != nil {
 		zap.S().Error("generate refresh token error: ", err)
 		return nil, errors.New("generate refresh token error")
@@ -80,10 +80,10 @@ func GenerateTokenPair(account string) (fiber.Map, error) {
 	return fiber.Map{"token": t, "refresh_token": rt}, nil
 }
 
-func GenerateDisposableToken(account string) (string, error) {
-	claims := &CustomClaims{Account: account}
+func GenerateDisposableToken(username string) (string, error) {
+	claims := &CustomClaims{Username: username}
 	id := NewNode().Generate().String()
-	err := rediscache.Set(constant.DisposableTokenPrefix+id, account, constant.TokenExpireTime)
+	err := rediscache.Set(constant.DisposableTokenPrefix+id, username, constant.TokenExpireTime)
 	if err != nil {
 		return "", err
 	}
