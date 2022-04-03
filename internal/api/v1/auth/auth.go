@@ -2,7 +2,7 @@
 // @file: auth.go
 // @date: 2021/11/21
 
-package v1
+package auth
 
 import (
 	"errors"
@@ -10,6 +10,7 @@ import (
 	"learning/internal/common/rediscache"
 	"learning/internal/constant"
 	"learning/internal/constant/e"
+	"learning/internal/log"
 	"learning/internal/model"
 	"learning/internal/service"
 	"learning/internal/utils"
@@ -20,13 +21,22 @@ import (
 
 var validate = utils.NewValidate()
 
-func Login(c *fiber.Ctx) error {
-	logger := utils.MustGetLoggerFromContext(c)
-	conn := utils.MustGetConnectionFromContext(c)
+type Handler struct {
+	service service.IUser
+	logger  *log.Logger
+}
 
+func New(service service.IUser, logger *log.Logger) *Handler {
+	return &Handler{
+		service: service,
+		logger:  logger,
+	}
+}
+
+func (h *Handler) Login(c *fiber.Ctx) error {
 	userX := new(model.User)
 	if err := c.BodyParser(userX); err != nil {
-		logger.Error("parse body error: ", err)
+		h.logger.Error("parse body error: ", err)
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
 	err := validate.Struct(userX)
@@ -40,16 +50,15 @@ func Login(c *fiber.Ctx) error {
 		userX.Nickname = userX.Username
 	}
 
-	userService := service.NewUser(conn)
-	user, err := userService.GetUserByUsername(username)
+	user, err := h.service.GetUserByUsername(username)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			if err := userService.CreateUser(userX); err != nil {
-				logger.Error("create user error: ", err)
+			if err := h.service.CreateUser(userX); err != nil {
+				h.logger.Error("create user error: ", err)
 				return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.ExistUsername))
 			}
 		} else {
-			logger.Error("get user error: ", err)
+			h.logger.Error("get user error: ", err)
 			return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.Error))
 		}
 	} else if *(user.Password) != password {
@@ -64,9 +73,7 @@ func Login(c *fiber.Ctx) error {
 	return c.JSON(t)
 }
 
-func Refresh(c *fiber.Ctx) error {
-	logger := utils.MustGetLoggerFromContext(c)
-
+func (h *Handler) Refresh(c *fiber.Ctx) error {
 	claims, err := utils.VerifyToken(c.Query("refresh_token"))
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(e.Failed(e.Unauthorized))
@@ -77,7 +84,7 @@ func Refresh(c *fiber.Ctx) error {
 			JSON(e.Failed(e.Unauthorized, e.WithMessage("Invalid refresh token.")))
 	}
 	if err := rediscache.Del(constant.RefreshTokenPrefix + claims["jti"].(string)); err != nil {
-		logger.Error("delete refresh token error: ", err)
+		h.logger.Error("delete refresh token error: ", err)
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(e.Failed(e.Error, e.WithMessage("Generate token failed.")))
 	}

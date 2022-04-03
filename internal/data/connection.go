@@ -53,7 +53,7 @@ func NewPostgres() (Connection, error) {
 		c.Postgres.Host,
 		c.Postgres.User,
 		c.Postgres.Password,
-		c.Postgres.DBName,
+		c.Postgres.Database,
 		c.Postgres.Port,
 	)
 	db, err := gorm.Open(

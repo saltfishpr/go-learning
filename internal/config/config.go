@@ -17,7 +17,7 @@ type Config struct {
 		Port     int    `mapstructure:"port"`
 		User     string `mapstructure:"user"`
 		Password string `mapstructure:"password"`
-		DBName   string `mapstructure:"db_name"`
+		Database string `mapstructure:"database"`
 	} `mapstructure:"postgres"`
 }
 

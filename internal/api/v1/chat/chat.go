@@ -2,13 +2,14 @@
 // @file: chat.go
 // @date: 2021/11/22
 
-package v1
+package chat
 
 import (
 	"context"
 
 	"learning/internal/common/connstorage"
 	"learning/internal/constant/e"
+	"learning/internal/log"
 	"learning/internal/model"
 	"learning/internal/service"
 	"learning/internal/utils"
@@ -19,7 +20,17 @@ import (
 	"go.uber.org/zap"
 )
 
-func ChatAuth(c *fiber.Ctx) error {
+type Handler struct {
+	logger *log.Logger
+}
+
+func New(logger *log.Logger) *Handler {
+	return &Handler{
+		logger: logger,
+	}
+}
+
+func (h *Handler) ChatAuth(c *fiber.Ctx) error {
 	username := utils.MustGetUsernameFromCtx(c)
 	token, err := utils.GenerateDisposableToken(username)
 	if err != nil {
@@ -30,7 +41,7 @@ func ChatAuth(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": token})
 }
 
-func ChatHandler(c *websocket.Conn) {
+func (h *Handler) ChatHandler(c *websocket.Conn) {
 	username := c.Locals("username").(string)
 	connstorage.Set(username, c)
 	defer connstorage.Del(username)
@@ -64,7 +75,7 @@ func ChatHandler(c *websocket.Conn) {
 	}
 }
 
-func GetMessages(c *fiber.Ctx) error {
+func (h *Handler) GetMessages(c *fiber.Ctx) error {
 	topic := c.Params("topic")
 	offset := c.Query("offset")
 	limit := c.Query("limit")

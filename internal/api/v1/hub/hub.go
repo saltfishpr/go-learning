@@ -1,53 +1,57 @@
 // @description: 处理 hubs 接口相关的 http 请求
-// @file: hubs.go
+// @file: hub.go
 // @date: 2021/11/21
 
-package v1
+package hub
 
 import (
 	"net/http"
 
 	"learning/internal/constant/e"
+	"learning/internal/log"
 	"learning/internal/model"
 	"learning/internal/service"
-	"learning/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func CreateHub(c *fiber.Ctx) error {
-	logger := utils.MustGetLoggerFromContext(c)
-	conn := utils.MustGetConnectionFromContext(c)
+type Handler struct {
+	service service.IHub
+	logger  *log.Logger
+}
 
+func New(service service.IHub, logger *log.Logger) *Handler {
+	return &Handler{
+		service: service,
+		logger:  logger,
+	}
+}
+
+func (h *Handler) CreateHub(c *fiber.Ctx) error {
 	hub := new(model.Hub)
 	if err := c.BodyParser(hub); err != nil {
-		logger.Error("parse body error: ", err)
+		h.logger.Error("parse body error: ", err)
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
 
-	hubService := service.NewHub(conn)
-	if err := hubService.CreateHub(hub); err != nil {
-		logger.Error("create hub error: ", err)
+	if err := h.service.CreateHub(hub); err != nil {
+		h.logger.Error("create hub error: ", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(e.Failed(e.ExistHub))
 	}
 
 	return c.SendStatus(fiber.StatusCreated)
 }
 
-func GetHub(c *fiber.Ctx) error {
-	logger := utils.MustGetLoggerFromContext(c)
-	conn := utils.MustGetConnectionFromContext(c)
-
+func (h *Handler) GetHub(c *fiber.Ctx) error {
 	hid := c.Params("hid")
 	if len(hid) == 0 {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
 	}
 
-	hubService := service.NewHub(conn)
-	hub, err := hubService.GetHubByHID(hid)
+	hub, err := h.service.GetHubByHID(hid)
 	if err != nil {
-		logger.Error("get hub error: ", err)
+		h.logger.Error("get hub error: ", err)
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(e.Failed(e.Error, e.WithMessage("get hub failed")))
 	}
@@ -55,13 +59,10 @@ func GetHub(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(hub)
 }
 
-func UpdateHub(c *fiber.Ctx) error {
-	logger := utils.MustGetLoggerFromContext(c)
-	conn := utils.MustGetConnectionFromContext(c)
-
+func (h *Handler) UpdateHub(c *fiber.Ctx) error {
 	hub := new(model.Hub)
 	if err := c.BodyParser(hub); err != nil {
-		logger.Error("parse body error: ", err)
+		h.logger.Error("parse body error: ", err)
 		return c.Status(fiber.StatusBadRequest).JSON(e.Failed(e.InvalidParams))
 	}
 	hid := c.Params("hid")
@@ -70,10 +71,9 @@ func UpdateHub(c *fiber.Ctx) error {
 			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
 	}
 
-	hubService := service.NewHub(conn)
-	err := hubService.UpdateHub(hub)
+	err := h.service.UpdateHub(hub)
 	if err != nil {
-		logger.Error("update hub error: ", err)
+		h.logger.Error("update hub error: ", err)
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(e.Failed(e.Error, e.WithMessage("update hub failed")))
 	}
@@ -81,20 +81,16 @@ func UpdateHub(c *fiber.Ctx) error {
 	return c.SendStatus(http.StatusOK)
 }
 
-func DeleteHub(c *fiber.Ctx) error {
-	logger := utils.MustGetLoggerFromContext(c)
-	conn := utils.MustGetConnectionFromContext(c)
-
+func (h *Handler) DeleteHub(c *fiber.Ctx) error {
 	hid := c.Params("hid")
 	if len(hid) == 0 {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(e.Failed(e.InvalidParams, e.WithMessage("missing hid")))
 	}
 
-	hubService := service.NewHub(conn)
-	err := hubService.DeleteHubByHID(hid)
+	err := h.service.DeleteHubByHID(hid)
 	if err != nil {
-		logger.Error("delete hub error: ", err)
+		h.logger.Error("delete hub error: ", err)
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(e.Failed(e.Error, e.WithMessage("delete hub failed")))
 	}
@@ -102,14 +98,10 @@ func DeleteHub(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
-func GetHubs(c *fiber.Ctx) error {
-	logger := utils.MustGetLoggerFromContext(c)
-	conn := utils.MustGetConnectionFromContext(c)
-
-	hubService := service.NewHub(conn)
-	hubs, err := hubService.GetAllHubs()
+func (h *Handler) GetHubs(c *fiber.Ctx) error {
+	hubs, err := h.service.GetAllHubs()
 	if err != nil {
-		logger.Error("get hubs error: ", err)
+		h.logger.Error("get hubs error: ", err)
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(e.Failed(e.Error, e.WithMessage("get all hubs failed")))
 	}

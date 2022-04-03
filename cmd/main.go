@@ -13,6 +13,7 @@ import (
 	"learning/internal"
 	"learning/internal/config"
 	"learning/internal/constant"
+	"learning/internal/data"
 	"learning/internal/log"
 )
 
@@ -23,9 +24,17 @@ func main() {
 	addr := flag.String("addr", ":49091", "HTTP service address.")
 	flag.Parse()
 
-	config.Init("config", "yml", []string{"config"})
+	config.Init("config", "yml", []string{"."})
 
-	app := internal.NewApp(logger)
+	connection, err := data.NewPostgres()
+	if err != nil {
+		logger.Fatal("connect to database error: ", err)
+	}
+	if ok, err := connection.IsConnected(); !ok || err != nil {
+		logger.Fatal("ping database error: ", err)
+	}
+
+	app := internal.NewApp(logger, connection)
 	go func() {
 		if err := app.Listen(*addr); err != nil {
 			logger.Fatal(err)
@@ -36,15 +45,22 @@ func main() {
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 
 	<-sig // wait for signal
-
 	logger.Info("Shutting down ...")
+
+	quit := make(chan struct{})
 	go func() {
 		err := app.Shutdown()
 		if err != nil {
 			logger.Fatal(err)
 		}
+		quit <- struct{}{}
 	}()
-	<-time.After(constant.ShutdownTime)
+
+	select {
+	case <-time.After(constant.ShutdownTimeout):
+		logger.Warn("Force shutdown with timeout")
+	case <-quit:
+	}
 	logger.Info("Running cleanup tasks...")
 	// cleanup tasks go here
 	logger.Info("Chat server was successful shutdown.")
