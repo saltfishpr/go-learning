@@ -1,0 +1,59 @@
+[
+  {
+    "locale": "en",
+    "key": "normal_test",
+    "trans": "Welcome to the {0}."
+  },
+
+  {
+    "locale": "en",
+    "key": "cardinal_test",
+    "trans": "You have {0} day left.",
+    "type": "Cardinal",
+    "rule": "One"
+  },
+  {
+    "locale": "en",
+    "key": "cardinal_test",
+    "trans": "You have {0} days left.",
+    "type": "Cardinal",
+    "rule": "Other"
+  },
+
+  {
+    "locale": "en",
+    "key": "ordinal_test",
+    "trans": "{0}st",
+    "type": "Ordinal",
+    "rule": "One"
+  },
+  {
+    "locale": "en",
+    "key": "ordinal_test",
+    "trans": "{0}nd",
+    "type": "Ordinal",
+    "rule": "Two"
+  },
+  {
+    "locale": "en",
+    "key": "ordinal_test",
+    "trans": "{0}rd",
+    "type": "Ordinal",
+    "rule": "Few"
+  },
+  {
+    "locale": "en",
+    "key": "ordinal_test",
+    "trans": "{0}th",
+    "type": "Ordinal",
+    "rule": "Other"
+  },
+
+  {
+    "locale": "en",
+    "key": "range_test",
+    "trans": "It's {0}-{1} days away",
+    "type": "Range",
+    "rule": "Other"
+  }
+]
