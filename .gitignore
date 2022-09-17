@@ -23,9 +23,3 @@ vendor/
 # OS General
 Thumbs.db
 .DS_Store
-
-# Project
-dist
-bin
-examples
-configs/secret.yaml
