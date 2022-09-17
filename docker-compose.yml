@@ -1,0 +1,26 @@
+version: "3"
+services:
+  stringsvc1:
+    image: stringsvc:latest
+    command: -listen=:8001
+    expose:
+      - 8001
+  stringsvc2:
+    image: stringsvc:latest
+    command: -listen=:8002
+    expose:
+      - 8002
+  stringsvc3:
+    image: stringsvc:latest
+    command: -listen=:8003
+    expose:
+      - 8003
+  stringsvc:
+    image: stringsvc:latest
+    ports:
+      - "8000:8000"
+    command: -listen=:8000 -proxy=stringsvc1:8001,stringsvc2:8002,stringsvc3:8003
+    depends_on:
+      - stringsvc1
+      - stringsvc2
+      - stringsvc3

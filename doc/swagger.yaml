@@ -1,0 +1,90 @@
+openapi: 3.0.0
+info:
+  description: "go-kit examples"
+  version: 0.1.0
+  title: String Service
+  contact:
+    email: saltfishpr@gmail.com
+  license:
+    name: MIT
+tags:
+  - name: stringsvc
+    description: go-kit stringsvc example
+    externalDocs:
+      description: Find out more
+      url: https://gokit.io/examples/stringsvc.html
+paths:
+  /uppercase:
+    post:
+      tags:
+        - stringsvc
+      summary: uppercase string
+      description: ""
+      operationId: uppercase
+      requestBody:
+        $ref: "#/components/requestBodies/uppercaseRequest"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/uppercaseResponse"
+              example:
+                v: "HELLO"
+                err: ""
+  /count:
+    post:
+      tags:
+        - stringsvc
+      summary: count string length
+      description: ""
+      operationId: count
+      requestBody:
+        $ref: "#/components/requestBodies/countRequest"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/countResponse"
+              example:
+                v: 10
+components:
+  requestBodies:
+    uppercaseRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/uppercaseRequest"
+      required: true
+    countRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/countRequest"
+      required: true
+  schemas:
+    uppercaseRequest:
+      type: object
+      properties:
+        s:
+          type: string
+    uppercaseResponse:
+      type: object
+      properties:
+        v:
+          type: string
+        err:
+          type: string
+    countRequest:
+      type: object
+      properties:
+        s:
+          type: string
+    countResponse:
+      type: object
+      properties:
+        v:
+          type: integer
