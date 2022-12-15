@@ -1,3 +1,4 @@
-# learning
+# chi examples
 
-There is no end to go for learning.
+- custom middlewares
+- router examples
