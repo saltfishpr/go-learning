@@ -2,22 +2,11 @@ import {randomIntBetween, randomString} from 'https://jslib.k6.io/k6-utils/1.2.0
 import ws from 'k6/ws';
 import {check} from 'k6';
 
-const sessionDuration = 10000; // user session 10000ms
-
-// export const options = {
-//     stages: [
-//         {duration: '10s', target: 2000},
-//         {duration: '30s', target: 5000},
-//         {duration: '10s', target: 1000},
-//     ],
-//     minIterationDuration: '15s',
-// };
+const sessionDuration = 10000;
 
 export const options = {
     stages: [
-        // {duration: '10s', target: 2000},
         {duration: '30s', target: 10000},
-        // {duration: '10s', target: 1000},
     ],
     minIterationDuration: '15s',
 };
