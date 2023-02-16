@@ -1,0 +1,32 @@
+version: "3"
+
+env:
+  MODULE_NAME: github.com/saltfishpr/go-learning
+
+vars:
+  VERSION:
+    sh: date '+%Y%m%d%H%M%S'
+
+tasks:
+  proto:
+    cmds:
+      - cd proto && buf mod update
+      - buf generate
+    silent: true
+
+  build:
+    cmds:
+      - go build -ldflags "-X main.Version={{.VERSION}}" -o bin/{{.SERVICE_NAME}} {{.MODULE_NAME}}/cmd/{{.SERVICE_NAME}}
+    silent: true
+
+  start:
+    cmds:
+      - bin/{{.SERVICE_NAME}} -conf cmd/{{.SERVICE_NAME}}/configs
+    silent: true
+
+  image:
+    cmds:
+      - docker build --pull --build-arg SERVICE_NAME={{.SERVICE_NAME}} --build-arg VERSION={{.VERSION}} -t {{.DOCKER_HUB_USERNAME}}/{{.SERVICE_NAME}}:{{.VERSION}} -t {{.DOCKER_HUB_USERNAME}}/{{.SERVICE_NAME}}:latest .
+    preconditions:
+      - test {{.DOCKER_HUB_USERNAME}}
+      - test {{.SERVICE_NAME}}
