@@ -2,6 +2,6 @@
 package conf
 
 type Config struct {
-	Addr      string
-	SecretKey string
+	Port      int    `json:"port"`
+	SecretKey string `json:"secret_key"`
 }

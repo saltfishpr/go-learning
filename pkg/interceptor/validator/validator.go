@@ -146,7 +146,9 @@ func extractCause(err error) error {
 
 func wrapError(err error) error {
 	if e, ok := extractCause(err).(validationError); ok {
-		return errors.New(codes.InvalidArgument, codes.InvalidArgument.String()).WithCause(err).WithMetadataPair(e.Field(), e.Reason())
+		return errors.New(codes.InvalidArgument, codes.InvalidArgument.String()).
+			WithCause(err).
+			WithMetadataPair(e.Field(), e.Reason())
 	}
 	return errors.New(codes.InvalidArgument, codes.InvalidArgument.String()).WithCause(err)
 }

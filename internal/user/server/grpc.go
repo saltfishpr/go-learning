@@ -19,31 +19,45 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 
+	userv1 "github.com/saltfishpr/go-learning/gen/go/user/v1"
 	"github.com/saltfishpr/go-learning/internal/user/conf"
+	"github.com/saltfishpr/go-learning/internal/user/service"
 	"github.com/saltfishpr/go-learning/pkg/errors"
 	_grpc_logging "github.com/saltfishpr/go-learning/pkg/interceptor/logging"
 	_grpc_validator "github.com/saltfishpr/go-learning/pkg/interceptor/validator"
 )
 
-func NewGRPCServer(i *do.Injector) *grpc.Server {
+func NewGRPC(i *do.Injector) *grpc.Server {
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_ctxtags.UnaryServerInterceptor(),
 			grpc_zap.UnaryServerInterceptor(do.MustInvoke[*zap.Logger](i), loggingOptions...),
-			grpc_zap.PayloadUnaryServerInterceptor(do.MustInvoke[*zap.Logger](i), unaryPayloadLoggingDecider()),
-			grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(recoverHandleFunc())),
+			grpc_zap.PayloadUnaryServerInterceptor(
+				do.MustInvoke[*zap.Logger](i),
+				unaryPayloadLoggingDecider(),
+			),
+			grpc_recovery.UnaryServerInterceptor(
+				grpc_recovery.WithRecoveryHandlerContext(recoverHandleFunc()),
+			),
 			grpc_auth.UnaryServerInterceptor(authFunc(do.MustInvoke[*conf.Config](i))),
 			_grpc_validator.UnaryServerInterceptor(),
 		)),
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			grpc_ctxtags.StreamServerInterceptor(),
 			grpc_zap.StreamServerInterceptor(do.MustInvoke[*zap.Logger](i), loggingOptions...),
-			grpc_zap.PayloadStreamServerInterceptor(do.MustInvoke[*zap.Logger](i), streamPayloadLoggingDecider()),
-			grpc_recovery.StreamServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(recoverHandleFunc())),
+			grpc_zap.PayloadStreamServerInterceptor(
+				do.MustInvoke[*zap.Logger](i),
+				streamPayloadLoggingDecider(),
+			),
+			grpc_recovery.StreamServerInterceptor(
+				grpc_recovery.WithRecoveryHandlerContext(recoverHandleFunc()),
+			),
 			grpc_auth.StreamServerInterceptor(authFunc(do.MustInvoke[*conf.Config](i))),
 			_grpc_validator.StreamServerInterceptor(),
 		)),
 	)
+
+	userv1.RegisterUserServiceServer(s, do.MustInvoke[*service.UserService](i))
 
 	return s
 }
