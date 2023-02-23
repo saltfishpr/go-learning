@@ -2,7 +2,7 @@ version: v1
 managed:
   enabled: true
   go_package_prefix:
-    default: github.com/saltfishpr/go-learning/proto
+    default: github.com/saltfishpr/go-learning/gen/go
     except:
       - buf.build/googleapis/googleapis
       - buf.build/envoyproxy/protoc-gen-validate
@@ -10,39 +10,40 @@ managed:
   java_package_prefix: com.github
 plugins:
   - plugin: buf.build/protocolbuffers/go
-    out: gen/proto/go
+    out: gen/go
     opt:
       - paths=source_relative
   - plugin: buf.build/grpc/go
-    out: gen/proto/go
+    out: gen/go
     opt:
       - paths=source_relative
-  - plugin: grpc-gateway
-    out: gen/proto/go
+  - plugin: buf.build/grpc-ecosystem/gateway
+    out: gen/go
     opt:
       - paths=source_relative
-  - plugin: validate
-    out: gen/proto/go
+  - plugin: buf.build/bufbuild/validate-go
+    out: gen/go
     opt:
       - paths=source_relative
-      - lang=go
 
   - plugin: buf.build/protocolbuffers/java
-    out: gen/proto/java
+    out: gen/java
   - plugin: buf.build/grpc/java
-    out: gen/proto/java
-  - plugin: validate
-    out: gen/proto/java
+    out: gen/java
+  - plugin: buf.build/bufbuild/validate-java
+    out: gen/java
     opt:
       - paths=source_relative
-      - lang=java
 
   - plugin: buf.build/protocolbuffers/js
-    out: gen/proto/js
+    out: gen/js
     opt:
       - import_style=commonjs,binary
   - plugin: buf.build/grpc/web
-    out: gen/proto/js
+    out: gen/js
     opt:
       - import_style=typescript
       - mode=grpcwebtext
+
+  - plugin: buf.build/grpc-ecosystem/openapiv2
+    out: gen/openapiv2

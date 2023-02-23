@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 
 	"github.com/saltfishpr/go-learning/pkg/errors"
 )
@@ -69,7 +70,7 @@ func UnaryServerInterceptor(opts ...Option) grpc.UnaryServerInterceptor {
 	o := evaluateOptions(opts...)
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if err := validate(req, o.all); err != nil {
-			return nil, wrapError(o.status, err)
+			return nil, wrapError(err)
 		}
 		return handler(ctx, req)
 	}
@@ -86,7 +87,7 @@ func UnaryClientInterceptor(opts ...Option) grpc.UnaryClientInterceptor {
 	o := evaluateOptions(opts...)
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		if err := validate(req, o.all); err != nil {
-			return wrapError(o.status, err)
+			return wrapError(err)
 		}
 		return invoker(ctx, method, req, reply, cc, opts...)
 	}
@@ -108,7 +109,6 @@ func StreamServerInterceptor(opts ...Option) grpc.StreamServerInterceptor {
 		wrapper := &recvWrapper{
 			all:          o.all,
 			ServerStream: stream,
-			status:       o.status,
 		}
 		return handler(srv, wrapper)
 	}
@@ -117,7 +117,6 @@ func StreamServerInterceptor(opts ...Option) grpc.StreamServerInterceptor {
 type recvWrapper struct {
 	all bool
 	grpc.ServerStream
-	status *errors.StatusImpl
 }
 
 func (s *recvWrapper) RecvMsg(m interface{}) error {
@@ -125,7 +124,7 @@ func (s *recvWrapper) RecvMsg(m interface{}) error {
 		return err
 	}
 	if err := validate(m, s.all); err != nil {
-		return wrapError(s.status, err)
+		return wrapError(err)
 	}
 	return nil
 }
@@ -145,9 +144,9 @@ func extractCause(err error) error {
 	return err
 }
 
-func wrapError(status *errors.StatusImpl, err error) error {
+func wrapError(err error) error {
 	if e, ok := extractCause(err).(validationError); ok {
-		return errors.New(status.WithMetadataPair(e.Field(), e.Reason())).WithCause(err)
+		return errors.New(codes.InvalidArgument, codes.InvalidArgument.String()).WithCause(err).WithMetadataPair(e.Field(), e.Reason())
 	}
-	return errors.New(status).WithCause(err)
+	return errors.New(codes.InvalidArgument, codes.InvalidArgument.String()).WithCause(err)
 }

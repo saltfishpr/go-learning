@@ -41,23 +41,20 @@ func extractStack(err error) string {
 		return ""
 	}
 
-	se, ok := lo.ErrorsAs[*errors.Error](err)
-	if ok {
+	if se, ok := lo.ErrorsAs[*errors.Error](err); ok {
 		st := errors.StackTrace(se.Unwrap())
-		stack := getStack(st, 10, 2)
-		return fmt.Sprintf("%s%+v", se.Unwrap().Error(), stack)
+		return fmt.Sprintf("%s%+v", se.Unwrap().Error(), getStack(st, 20, 2))
 	}
 	return ""
 }
 
 func getStack(st pkgerrors.StackTrace, depth int, skip int) pkgerrors.StackTrace {
-	if len(st) < skip {
-		return nil
+	if len(st) <= depth {
+		return st
 	}
-
+	depth += skip
 	if len(st) < depth {
 		return st[skip:]
 	}
-
-	return st[skip : skip+depth]
+	return st[skip:depth]
 }

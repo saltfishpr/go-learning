@@ -5,25 +5,21 @@ import (
 	"fmt"
 
 	"github.com/samber/lo"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-type Status interface {
-	fmt.Stringer
-	GRPCStatus() *status.Status
-}
-
 type Error struct {
-	s     Status
+	s     *status.Status
+	md    map[string]string
 	cause error
 }
 
-func New(s Status) *Error {
-	if s == nil {
-		return nil
+func New(code codes.Code, message string) *Error {
+	return &Error{
+		s: status.New(code, message),
 	}
-	return &Error{s: s}
 }
 
 func (e *Error) Error() string {
@@ -35,7 +31,7 @@ func (e *Error) Unwrap() error {
 	return e.cause
 }
 
-func (e *Error) WithCause(cause error) error {
+func (e *Error) WithCause(cause error) *Error {
 	if cause == nil {
 		return e
 	}
@@ -50,28 +46,33 @@ func (e *Error) WithCause(cause error) error {
 	}
 }
 
-func (e *Error) GRPCStatus() *status.Status {
-	return e.s.GRPCStatus()
+func (e *Error) WithMetadataPair(key, value string) *Error {
+	if e.md == nil {
+		e.md = make(map[string]string)
+	}
+	e.md[key] = value
+	return e
 }
 
-func FromError(err error) *Error {
-	if err == nil {
-		return nil
+func (e *Error) WithMetadata(md map[string]string) *Error {
+	if e.md == nil {
+		e.md = make(map[string]string)
 	}
+	for k, v := range md {
+		e.md[k] = v
+	}
+	return e
+}
 
-	if se, ok := lo.ErrorsAs[*Error](err); ok {
-		return se
+func (e *Error) GRPCStatus() *status.Status {
+	if len(e.md) == 0 {
+		return e.s
 	}
-
-	if gs, ok := status.FromError(err); ok {
-		return &Error{
-			s:     NewStatus(gs.Code(), gs.Message()),
-			cause: withStack(gs.Err()),
-		}
+	s, err := e.s.WithDetails(&errdetails.ErrorInfo{
+		Metadata: e.md,
+	})
+	if err != nil {
+		return e.s
 	}
-
-	return &Error{
-		s:     NewStatus(codes.Unknown, codes.Unknown.String()),
-		cause: withStack(err),
-	}
+	return s
 }

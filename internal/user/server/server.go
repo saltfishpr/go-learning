@@ -3,9 +3,9 @@ package server
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
 
-	"github.com/golang-jwt/jwt/v4"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/logging"
@@ -17,10 +17,10 @@ import (
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/saltfishpr/go-learning/internal/user/conf"
 	"github.com/saltfishpr/go-learning/pkg/errors"
-	_grpc_auth_jwt "github.com/saltfishpr/go-learning/pkg/interceptor/auth/jwt"
 	_grpc_logging "github.com/saltfishpr/go-learning/pkg/interceptor/logging"
 	_grpc_validator "github.com/saltfishpr/go-learning/pkg/interceptor/validator"
 )
@@ -32,7 +32,7 @@ func NewGRPCServer(i *do.Injector) *grpc.Server {
 			grpc_zap.UnaryServerInterceptor(do.MustInvoke[*zap.Logger](i), loggingOptions...),
 			grpc_zap.PayloadUnaryServerInterceptor(do.MustInvoke[*zap.Logger](i), unaryPayloadLoggingDecider()),
 			grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(recoverHandleFunc())),
-			grpc_auth.UnaryServerInterceptor(_grpc_auth_jwt.AuthFunc(authFunc(do.MustInvoke[*conf.Config](i)))),
+			grpc_auth.UnaryServerInterceptor(authFunc(do.MustInvoke[*conf.Config](i))),
 			_grpc_validator.UnaryServerInterceptor(),
 		)),
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
@@ -40,7 +40,7 @@ func NewGRPCServer(i *do.Injector) *grpc.Server {
 			grpc_zap.StreamServerInterceptor(do.MustInvoke[*zap.Logger](i), loggingOptions...),
 			grpc_zap.PayloadStreamServerInterceptor(do.MustInvoke[*zap.Logger](i), streamPayloadLoggingDecider()),
 			grpc_recovery.StreamServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(recoverHandleFunc())),
-			grpc_auth.StreamServerInterceptor(_grpc_auth_jwt.AuthFunc(authFunc(do.MustInvoke[*conf.Config](i)))),
+			grpc_auth.StreamServerInterceptor(authFunc(do.MustInvoke[*conf.Config](i))),
 			_grpc_validator.StreamServerInterceptor(),
 		)),
 	)
@@ -73,13 +73,27 @@ func streamPayloadLoggingDecider() grpc_logging.ServerPayloadLoggingDecider {
 
 func recoverHandleFunc() grpc_recovery.RecoveryHandlerFuncContext {
 	return func(ctx context.Context, p interface{}) (err error) {
-		return errors.New(errors.NewStatus(codes.Unknown, codes.Unknown.String())).
+		return errors.New(codes.Unknown, codes.Unknown.String()).
 			WithCause(fmt.Errorf("%v", p))
 	}
 }
 
-func authFunc(config *conf.Config) func(tokenStr string) (*jwt.MapClaims, error) {
-	return func(tokenStr string) (*jwt.MapClaims, error) {
-		return nil, nil
+func authFunc(config *conf.Config) grpc_auth.AuthFunc {
+	return func(ctx context.Context) (context.Context, error) {
+		return ctx, nil
 	}
+}
+
+func getTokenFromContext(ctx context.Context) (string, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", stderrors.New("no metadata in context")
+	}
+
+	values := md["authorization"]
+	if len(values) == 0 {
+		return "", stderrors.New("no authorization")
+	}
+
+	return values[0], nil
 }
