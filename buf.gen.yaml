@@ -47,3 +47,5 @@ plugins:
 
   - plugin: buf.build/grpc-ecosystem/openapiv2
     out: gen/openapiv2
+    opt:
+      - output_format=yaml
