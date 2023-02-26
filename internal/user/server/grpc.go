@@ -32,26 +32,16 @@ func NewGRPC(i *do.Injector) *grpc.Server {
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_ctxtags.UnaryServerInterceptor(),
 			grpc_zap.UnaryServerInterceptor(do.MustInvoke[*zap.Logger](i), loggingOptions...),
-			grpc_zap.PayloadUnaryServerInterceptor(
-				do.MustInvoke[*zap.Logger](i),
-				unaryPayloadLoggingDecider(),
-			),
-			grpc_recovery.UnaryServerInterceptor(
-				grpc_recovery.WithRecoveryHandlerContext(recoverHandleFunc()),
-			),
+			grpc_zap.PayloadUnaryServerInterceptor(do.MustInvoke[*zap.Logger](i), unaryPayloadLoggingDecider()),
+			grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(recoverHandleFunc())),
 			grpc_auth.UnaryServerInterceptor(authFunc(do.MustInvoke[*conf.Config](i))),
 			_grpc_validator.UnaryServerInterceptor(),
 		)),
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			grpc_ctxtags.StreamServerInterceptor(),
 			grpc_zap.StreamServerInterceptor(do.MustInvoke[*zap.Logger](i), loggingOptions...),
-			grpc_zap.PayloadStreamServerInterceptor(
-				do.MustInvoke[*zap.Logger](i),
-				streamPayloadLoggingDecider(),
-			),
-			grpc_recovery.StreamServerInterceptor(
-				grpc_recovery.WithRecoveryHandlerContext(recoverHandleFunc()),
-			),
+			grpc_zap.PayloadStreamServerInterceptor(do.MustInvoke[*zap.Logger](i), streamPayloadLoggingDecider()),
+			grpc_recovery.StreamServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(recoverHandleFunc())),
 			grpc_auth.StreamServerInterceptor(authFunc(do.MustInvoke[*conf.Config](i))),
 			_grpc_validator.StreamServerInterceptor(),
 		)),

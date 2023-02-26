@@ -9,7 +9,13 @@ import "validate/validate.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
-  info : {title : "User Service"}
+  info : {
+    title : "User Service"
+    version : "0.1.0"
+    contact : {}
+  }
+  schemes : HTTP
+  schemes : HTTPS
 };
 
 service UserService {

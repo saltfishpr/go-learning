@@ -2,8 +2,10 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 
+	pkgerrors "github.com/pkg/errors"
 	"github.com/samber/lo"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -18,7 +20,8 @@ type Error struct {
 
 func New(code codes.Code, message string) *Error {
 	return &Error{
-		s: status.New(code, message),
+		s:     status.New(code, message),
+		cause: withStack(errors.New(message)),
 	}
 }
 
@@ -28,6 +31,10 @@ func (e *Error) Error() string {
 
 // Unwrap returns the cause of the error.
 func (e *Error) Unwrap() error {
+	return e.cause
+}
+
+func (e *Error) Cause() error {
 	return e.cause
 }
 
@@ -75,4 +82,16 @@ func (e *Error) GRPCStatus() *status.Status {
 		return e.s
 	}
 	return s
+}
+
+func Cause(err error) error {
+	return pkgerrors.Cause(err)
+}
+
+func Unwrap(err error) error {
+	return errors.Unwrap(err)
+}
+
+func Is(err error, target error) bool {
+	return errors.Is(err, Cause(err))
 }
