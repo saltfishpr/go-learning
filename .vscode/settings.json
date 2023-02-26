@@ -1,5 +1,15 @@
 {
-    "gopls": {
-        "formatting.local": "github.com/saltfishpr/go-learning"
-    }
+  "gopls": {
+    "formatting.local": "github.com/saltfishpr/go-learning"
+  },
+  "protoc": {
+    "options": [
+      "--proto_path=buf.build/googleapis/googleapis",
+      "--proto_path=buf.build/envoyproxy/protoc-gen-validate",
+      "--proto_path=buf.build/grpc-ecosystem/grpc-gateway"
+    ]
+  },
+  "[proto3]": {
+    "editor.defaultFormatter": "zxh404.vscode-proto3"
+  }
 }

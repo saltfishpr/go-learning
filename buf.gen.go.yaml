@@ -6,8 +6,7 @@ managed:
     except:
       - buf.build/googleapis/googleapis
       - buf.build/envoyproxy/protoc-gen-validate
-  java_multiple_files: true
-  java_package_prefix: com.github
+      - buf.build/grpc-ecosystem/grpc-gateway
 plugins:
   - plugin: buf.build/protocolbuffers/go
     out: gen/go
@@ -25,25 +24,6 @@ plugins:
     out: gen/go
     opt:
       - paths=source_relative
-
-  - plugin: buf.build/protocolbuffers/java
-    out: gen/java
-  - plugin: buf.build/grpc/java
-    out: gen/java
-  - plugin: buf.build/bufbuild/validate-java
-    out: gen/java
-    opt:
-      - paths=source_relative
-
-  - plugin: buf.build/protocolbuffers/js
-    out: gen/js
-    opt:
-      - import_style=commonjs,binary
-  - plugin: buf.build/grpc/web
-    out: gen/js
-    opt:
-      - import_style=typescript
-      - mode=grpcwebtext
 
   - plugin: buf.build/grpc-ecosystem/openapiv2
     out: gen/openapiv2
