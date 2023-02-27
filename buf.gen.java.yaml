@@ -2,7 +2,10 @@ version: v1
 managed:
   enabled: true
   java_multiple_files: true
-  java_package_prefix: com.github.saltfishpr.demo
+  java_package_prefix:
+    default: com.example.demo.gen.java
+    except:
+      - buf.build/googleapis/googleapis
 plugins:
   - plugin: buf.build/protocolbuffers/java
     out: gen/java
@@ -10,5 +13,3 @@ plugins:
     out: gen/java
   - plugin: buf.build/bufbuild/validate-java
     out: gen/java
-    opt:
-      - paths=source_relative

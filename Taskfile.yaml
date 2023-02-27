@@ -21,10 +21,10 @@ tasks:
     cmds:
       - buf generate --template buf.gen.js.yaml buf.build/googleapis/googleapis
       - buf generate --template buf.gen.js.yaml buf.build/envoyproxy/protoc-gen-validate
-      - buf generate --template buf.gen.js.yaml buf.build/grpc-ecosystem/grpc-gateway
       - buf generate --template buf.gen.js.yaml proto
   proto-java:
     cmds:
+      - buf generate --template buf.gen.java.yaml buf.build/envoyproxy/protoc-gen-validate
       - buf generate --template buf.gen.java.yaml proto
 
   build:

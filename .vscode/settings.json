@@ -5,8 +5,7 @@
   "protoc": {
     "options": [
       "--proto_path=buf.build/googleapis/googleapis",
-      "--proto_path=buf.build/envoyproxy/protoc-gen-validate",
-      "--proto_path=buf.build/grpc-ecosystem/grpc-gateway"
+      "--proto_path=buf.build/envoyproxy/protoc-gen-validate"
     ]
   },
   "[proto3]": {
