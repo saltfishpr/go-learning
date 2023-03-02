@@ -5,7 +5,7 @@ env:
 
 vars:
   VERSION:
-    sh: date '+%Y%m%d%H%M%S'
+    sh: git log -n 1 --format=%h
 
 tasks:
   proto:
@@ -27,19 +27,36 @@ tasks:
       - buf generate --template buf.gen.java.yaml buf.build/envoyproxy/protoc-gen-validate
       - buf generate --template buf.gen.java.yaml proto
 
+  proto-check:
+    cmds:
+      - buf lint proto
+    silent: true
+  proto-fmt:
+    cmds:
+      - buf format -w proto
+    silent: true
+
   build:
+    preconditions:
+      - sh: test {{.SERVICE_NAME}}
+        msg: "SERVICE_NAME is required"
     cmds:
       - go build -ldflags "-X main.Version={{.VERSION}}" -o bin/{{.SERVICE_NAME}} {{.MODULE_NAME}}/cmd/{{.SERVICE_NAME}}
     silent: true
 
   start:
+    preconditions:
+      - sh: test {{.SERVICE_NAME}}
+        msg: "SERVICE_NAME is required"
     cmds:
-      - bin/{{.SERVICE_NAME}} -conf cmd/{{.SERVICE_NAME}}/configs
+      - bin/{{.SERVICE_NAME}} {{.CLI_ARGS}}
     silent: true
 
-  image:
-    cmds:
-      - docker build --pull --build-arg SERVICE_NAME={{.SERVICE_NAME}} --build-arg VERSION={{.VERSION}} -t {{.DOCKER_HUB_USERNAME}}/{{.SERVICE_NAME}}:{{.VERSION}} -t {{.DOCKER_HUB_USERNAME}}/{{.SERVICE_NAME}}:latest .
+  build-image:
     preconditions:
-      - test {{.DOCKER_HUB_USERNAME}}
-      - test {{.SERVICE_NAME}}
+      - sh: test {{.SERVICE_NAME}}
+        msg: "SERVICE_NAME is required"
+      - sh: test {{.DOCKER_HUB_USERNAME}}
+        msg: "DOCKER_HUB_USERNAME is required"
+    cmds:
+      - docker buildx build --platform linux/arm,linux/arm64,linux/amd64 --pull --build-arg SERVICE_NAME={{.SERVICE_NAME}} --build-arg VERSION={{.VERSION}} -t {{.DOCKER_HUB_USERNAME}}/{{.SERVICE_NAME}}:{{.VERSION}} -t {{.DOCKER_HUB_USERNAME}}/{{.SERVICE_NAME}}:latest .

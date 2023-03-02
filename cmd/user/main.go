@@ -20,6 +20,8 @@ import (
 	"github.com/saltfishpr/go-learning/internal/user/server"
 )
 
+var Version string
+
 var cfgFile string
 
 func init() {
@@ -46,20 +48,21 @@ func main() {
 		"start to listen",
 		zap.Int("port", config.Port),
 		zap.String("log_level", logger.Level().String()),
+		zap.String("version", Version),
 	)
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", config.Port))
 	if err != nil {
 		logger.Fatal("failed to listen", zap.Error(err))
 	}
 	g.Add(func() error {
-		h2Handler := h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handler := h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
 				grpcServer.ServeHTTP(w, r)
 			} else {
 				httpServer.ServeHTTP(w, r)
 			}
 		}), &http2.Server{})
-		return http.Serve(lis, h2Handler)
+		return http.Serve(lis, handler)
 	}, func(err error) {
 		lis.Close()
 	})

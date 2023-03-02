@@ -2,71 +2,81 @@ syntax = "proto3";
 
 package user.v1;
 
+import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
-import "google/api/annotations.proto";
 import "validate/validate.proto";
 
 service UserService {
   rpc Register(RegisterRequest) returns (RegisterResponse) {
     option (google.api.http) = {
-      post : "/v1/register"
-      body : "*"
+      post: "/v1/register"
+      body: "*"
     };
   }
 
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (google.api.http) = {
-      post : "/v1/login"
-      body : "*"
+      post: "/v1/login"
+      body: "*"
     };
   }
 
   rpc CreateUser(CreateUserRequest) returns (User) {
     option (google.api.http) = {
-      post : "/v1/users"
-      body : "user"
+      post: "/v1/users"
+      body: "user"
     };
   }
 
   rpc UpdateUser(UpdateUserRequest) returns (User) {
     option (google.api.http) = {
-      patch : "/v1/{user.name=users/*}"
-      body : "user"
+      patch: "/v1/{user.name=users/*}"
+      body: "user"
     };
   }
 
   rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete : "/v1/{name=users/*}"
-    };
+    option (google.api.http) = {delete: "/v1/{name=users/*}"};
   }
 
   rpc GetUser(GetUserRequest) returns (User) {
-    option (google.api.http) = {
-      get : "/v1/{name=users/*}"
-    };
+    option (google.api.http) = {get: "/v1/{name=users/*}"};
   }
 
   rpc ListUser(ListUserRequest) returns (ListUserResponse) {
-    option (google.api.http) = {
-      get : "/v1/users"
-    };
+    option (google.api.http) = {get: "/v1/users"};
   }
 }
 
 message RegisterRequest {
-  string username = 1 [ (validate.rules).string = {min_len : 3, max_len : 32} ];
-  string password = 2 [ (validate.rules).string = {min_len : 6, max_len : 32} ];
-  string email = 3 [ (validate.rules).string = {email : true} ];
+  string username = 1 [(validate.rules).string = {
+    min_len: 3,
+    max_len: 32
+  }];
+  string password = 2 [(validate.rules).string = {
+    min_len: 6,
+    max_len: 32
+  }];
+  string email = 3 [(validate.rules).string = {email: true}];
 }
-message RegisterResponse { string name = 1; }
+message RegisterResponse {
+  string name = 1;
+}
 
 message LoginRequest {
-  string username = 1 [ (validate.rules).string = {min_len : 3, max_len : 32} ];
-  string password = 2 [ (validate.rules).string = {min_len : 6, max_len : 32} ];
+  string username = 1 [(validate.rules).string = {
+    min_len: 3,
+    max_len: 32
+  }];
+  string password = 2 [(validate.rules).string = {
+    min_len: 6,
+    max_len: 32
+  }];
 }
-message LoginResponse { string token = 1; }
+message LoginResponse {
+  string token = 1;
+}
 
 message User {
   string name = 1;
@@ -76,38 +86,55 @@ message User {
 
 message CreateUserRequest {
   message User {
-    string username = 1
-        [ (validate.rules).string = {min_len : 3, max_len : 32} ];
-    string password = 2
-        [ (validate.rules).string = {min_len : 6, max_len : 32} ];
-    string email = 3 [ (validate.rules).string = {email : true} ];
+    string username = 1 [(validate.rules).string = {
+      min_len: 3,
+      max_len: 32
+    }];
+    string password = 2 [(validate.rules).string = {
+      min_len: 6,
+      max_len: 32
+    }];
+    string email = 3 [(validate.rules).string = {email: true}];
   }
-  User user = 1 [ (validate.rules).message.required = true ];
+  User user = 1 [(validate.rules).message.required = true];
 }
 
 message UpdateUserRequest {
   message User {
     string name = 1;
-    string username = 2 [
-      (validate.rules).string = {ignore_empty : true, min_len : 3, max_len : 32}
-    ];
-    string password = 3 [
-      (validate.rules).string = {ignore_empty : true, min_len : 6, max_len : 32}
-    ];
-    string email = 4
-        [ (validate.rules).string = {ignore_empty : true, email : true} ];
+    string username = 2 [(validate.rules).string = {
+      ignore_empty: true,
+      min_len: 3,
+      max_len: 32
+    }];
+    string password = 3 [(validate.rules).string = {
+      ignore_empty: true,
+      min_len: 6,
+      max_len: 32
+    }];
+    string email = 4 [(validate.rules).string = {
+      ignore_empty: true,
+      email: true
+    }];
   }
-  User user = 1 [ (validate.rules).message.required = true ];
+  User user = 1 [(validate.rules).message.required = true];
   google.protobuf.FieldMask mask = 2;
 }
 
-message DeleteUserRequest { string name = 1; }
+message DeleteUserRequest {
+  string name = 1;
+}
 
-message GetUserRequest { string name = 1; }
+message GetUserRequest {
+  string name = 1;
+}
 
 message ListUserRequest {
-  int64 offset = 1 [ (validate.rules).int64 = {gte : 0} ];
-  int64 limit = 2 [ (validate.rules).int64 = {gte : 0, lte : 500} ];
+  int64 offset = 1 [(validate.rules).int64 = {gte: 0}];
+  int64 limit = 2 [(validate.rules).int64 = {
+    gte: 0,
+    lte: 500
+  }];
 }
 message ListUserResponse {
   repeated User data = 1;
