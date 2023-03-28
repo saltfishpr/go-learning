@@ -10,6 +10,10 @@ import (
 
 type MatchFunc func(ctx context.Context, name string) bool
 
+// UnaryServer wraps the given interceptors in a selector.
+// The interceptors are only called if the match function returns true when called with the current ctx and the current full method name.
+// This is useful for using a selector to enable or disable certain interceptors based on the current request.
+// For example, you could use this to enable or disable logging for a particular request.
 func UnaryServer(opts ...Option) func(interceptors ...grpc.UnaryServerInterceptor) grpc.UnaryServerInterceptor {
 	o := evaluateOptions(opts...)
 	return func(interceptors ...grpc.UnaryServerInterceptor) grpc.UnaryServerInterceptor {

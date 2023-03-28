@@ -2,45 +2,38 @@ package errors
 
 import (
 	pkgerrors "github.com/pkg/errors"
-	"github.com/samber/lo"
 )
+
+type StackTracer interface {
+	StackTrace() pkgerrors.StackTrace
+}
 
 func WithStack(err error) error {
 	if err == nil {
 		return nil
 	}
-
-	if se, ok := lo.ErrorsAs[*Error](err); ok {
-		return se
-	}
-
-	return withStack(err)
-}
-
-type stackTracer interface {
-	StackTrace() pkgerrors.StackTrace
-}
-
-func withStack(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	if _, ok := err.(stackTracer); ok {
+	if _, ok := err.(StackTracer); ok {
 		return err
 	}
-
 	return pkgerrors.WithStack(err)
 }
 
-func StackTrace(err error) pkgerrors.StackTrace {
+func HasStack(err error) bool {
+	if err == nil {
+		return false
+	}
+	if _, ok := err.(StackTracer); ok {
+		return true
+	}
+	return false
+}
+
+func TraceStack(err error) pkgerrors.StackTrace {
 	if err == nil {
 		return nil
 	}
-
-	if st, ok := err.(stackTracer); ok {
+	if st, ok := err.(StackTracer); ok {
 		return st.StackTrace()
 	}
-
 	return nil
 }

@@ -16,18 +16,17 @@ deb https://mirrors.tuna.tsinghua.edu.cn/debian-security bullseye-security main 
 # deb-src https://mirrors.tuna.tsinghua.edu.cn/debian-security bullseye-security main contrib non-free
 " | sudo tee /etc/apt/sources.list > /dev/null
 
-go env -w GO111MODULE=on
-go env -w GOPROXY=https://goproxy.cn,direct
-
 go install github.com/go-task/task/v3/cmd/task@latest # task runner
 go install github.com/segmentio/golines@latest # formatter
-go install github.com/bufbuild/buf/cmd/buf@latest # buf
 
-# download protoc to /usr/local/bin and google well known types to /usr/local/include
-TMP="/tmp" && BIN="/usr/local/bin" && VERSION=3.20.3 && \
-    curl -L https://github.com/protocolbuffers/protobuf/releases/download/v$VERSION/protoc-$VERSION-$(uname -s)-$(uname -m).zip -o $TMP/protoc.zip && \
-    unzip -o $TMP/protoc.zip -d $TMP/protoc && \
-    sudo mv $TMP/protoc/bin/protoc $BIN/protoc && \
-    sudo mv $TMP/protoc/include/google /usr/local/include/google && \
-    sudo chmod +x $BIN/protoc && \
-    rm -rf $TMP/protoc.zip $TMP/protoc
+PROTOC_VERSION=3.20.3
+PROTOC_ZIP=protoc-$PROTOC_VERSION-linux-x86_64.zip
+curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/$PROTOC_ZIP
+sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
+sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
+rm -f $PROTOC_ZIP
+
+BIN="/go/bin" && \
+VERSION="1.15.1" && \
+curl -sSL "https://github.com/bufbuild/buf/releases/download/v${VERSION}/buf-$(uname -s)-$(uname -m)" -o "${BIN}/buf" && \
+chmod +x "${BIN}/buf"
