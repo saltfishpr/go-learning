@@ -19,8 +19,6 @@ tasks:
       - buf generate --template buf.gen.go.yaml proto
   proto-js:
     cmds:
-      - buf generate --template buf.gen.js.yaml buf.build/googleapis/googleapis
-      - buf generate --template buf.gen.js.yaml buf.build/envoyproxy/protoc-gen-validate
       - buf generate --template buf.gen.js.yaml proto
   proto-java:
     cmds:
@@ -41,7 +39,7 @@ tasks:
       - sh: test {{.SERVICE_NAME}}
         msg: "SERVICE_NAME is required"
     cmds:
-      - go build -ldflags "-X main.Version={{.VERSION}}" -o bin/{{.SERVICE_NAME}} {{.MODULE_NAME}}/cmd/{{.SERVICE_NAME}}
+      - CGO_ENABLED=0 go build -ldflags "-X main.Version={{.VERSION}}" -o bin/{{.SERVICE_NAME}} {{.MODULE_NAME}}/cmd/{{.SERVICE_NAME}}
     silent: true
 
   start:
