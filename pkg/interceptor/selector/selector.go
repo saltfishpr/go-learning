@@ -27,6 +27,10 @@ func UnaryServer(opts ...Option) func(interceptors ...grpc.UnaryServerIntercepto
 	}
 }
 
+// StreamServer wraps the given interceptors in a selector.
+// The interceptors are only called if the match function returns true when called with the current ctx and the current full method name.
+// This is useful for using a selector to enable or disable certain interceptors based on the current request.
+// For example, you could use this to enable or disable logging for a particular request.
 func StreamServer(opts ...Option) func(interceptors ...grpc.StreamServerInterceptor) grpc.StreamServerInterceptor {
 	o := evaluateOptions(opts...)
 	return func(interceptors ...grpc.StreamServerInterceptor) grpc.StreamServerInterceptor {

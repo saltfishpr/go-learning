@@ -70,7 +70,7 @@ func (e *Error) WithCause(cause error) *Error {
 func (e *Error) WithMetadataPair(key, value string) *Error {
 	_md := util.CloneMap(e.md)
 	if _md == nil {
-		_md = make(map[string]string)
+		_md = map[string]string{}
 	}
 	_md[key] = value
 	return &Error{
@@ -84,7 +84,7 @@ func (e *Error) WithMetadataPair(key, value string) *Error {
 func (e *Error) WithMetadata(md map[string]string) *Error {
 	_md := util.CloneMap(e.md)
 	if _md == nil {
-		_md = make(map[string]string)
+		_md = map[string]string{}
 	}
 	for k, v := range md {
 		_md[k] = v
