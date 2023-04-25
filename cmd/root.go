@@ -23,8 +23,10 @@ package cmd
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -50,27 +52,27 @@ var models = map[string]Model{
 	"tiny": {
 		name:     "ggml-tiny.bin",
 		url:      "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.bin",
-		checksum: "",
+		checksum: "be07e048e1e599ad46341c8d2a135645097a538221678b7acdd1b1919c6e1b21",
 	},
 	"base": {
 		name:     "ggml-base.bin",
 		url:      "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin",
-		checksum: "",
+		checksum: "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe",
 	},
 	"small": {
 		name:     "ggml-small.bin",
 		url:      "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin",
-		checksum: "",
+		checksum: "1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b",
 	},
 	"medium": {
 		name:     "ggml-medium.bin",
 		url:      "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.bin",
-		checksum: "",
+		checksum: "6c14d5adee5f86394037b4e4e8b59f1673b6cee10e3cf0b11bbdbee79c156208",
 	},
 	"large": {
 		name:     "ggml-large.bin",
 		url:      "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large.bin",
-		checksum: "",
+		checksum: "", // TODO
 	},
 }
 
@@ -144,22 +146,34 @@ var rootCmd = &cobra.Command{
 		}
 		modelPath := path.Join(modelDir, models[model].name)
 		if _, err := os.Stat(modelPath); err != nil {
-			if !os.IsNotExist(err) {
+			if os.IsNotExist(err) {
+				if err := downloadModel(ctx, modelDir, model); err != nil {
+					return err
+				}
+			} else {
 				return err
 			}
-			fmt.Printf("downloading model %s to %s \n", model, modelPath)
-			client := resty.New()
-			_, err := client.R().
-				SetContext(ctx).
-				SetOutput(modelPath).
-				Get(models[model].url)
+		} else {
+			checksum, err := sha256sum(modelPath)
 			if err != nil {
-				_ = os.Remove(modelPath)
-				return fmt.Errorf("download model %s failed: %w", model, err)
+				return err
+			}
+			// checksum mismatch, re-download
+			if checksum != models[model].checksum {
+				os.Remove(modelPath)
+				if err := downloadModel(ctx, modelDir, model); err != nil {
+					return err
+				}
 			}
 		}
 
-		// TODO: check model checksum
+		checksum, err := sha256sum(modelPath)
+		if err != nil {
+			return err
+		}
+		if checksum != models[model].checksum {
+			return fmt.Errorf("model checksum mismatch: %s != %s", checksum, models[model].checksum)
+		}
 
 		// whisper model
 		wm, err := whisper.New(modelPath)
@@ -189,7 +203,6 @@ var rootCmd = &cobra.Command{
 		defer fh.Close()
 
 		var data []float32
-		// Decode the WAV file - load the full buffer
 		dec := wav.NewDecoder(fh)
 		if buf, err := dec.FullPCMBuffer(); err != nil {
 			return err
@@ -202,7 +215,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		var cb whisper.SegmentCallback = func(s whisper.Segment) {
-			fmt.Printf("%02d [%6s->%6s] ", s.Num, s.Start.Truncate(time.Millisecond), s.End.Truncate(time.Millisecond))
+			fmt.Printf("%02d [%4s->%4s] ", s.Num, s.Start.Truncate(time.Millisecond), s.End.Truncate(time.Millisecond))
 			fmt.Println(s.Text)
 		}
 
@@ -280,4 +293,33 @@ func contextForSignal(signals ...os.Signal) context.Context {
 
 	// Return success
 	return ctx
+}
+
+func sha256sum(fileName string) (string, error) {
+	f, err := os.Open(fileName)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+func downloadModel(ctx context.Context, folder string, model string) error {
+	modelPath := path.Join(folder, models[model].name)
+	fmt.Printf("downloading model %s to %s \n", model, modelPath)
+	client := resty.New()
+	_, err := client.R().
+		SetContext(ctx).
+		SetOutput(modelPath).
+		Get(models[model].url)
+	if err != nil {
+		_ = os.Remove(modelPath)
+		return fmt.Errorf("download model %s failed: %w", model, err)
+	}
+	return nil
 }
