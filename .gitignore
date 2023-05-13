@@ -23,3 +23,8 @@ go.work
 # OS General
 Thumbs.db
 .DS_Store
+
+# Project Specific
+data/*
+!data/.gitkeep
+
