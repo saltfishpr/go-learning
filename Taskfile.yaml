@@ -8,33 +8,45 @@ vars:
     sh: git log -n 1 --format=%h
 
 tasks:
+  default:
+    cmds:
+      - task --list
+    silent: true
+
   proto:
+    desc: Generate codes for all language
     cmds:
       - task: proto-go
       - task: proto-js
       - task: proto-java
     silent: true
   proto-go:
+    desc: Generate codes for go
     cmds:
       - buf generate --template buf.gen.go.yaml proto
   proto-js:
+    desc: Generate codes for js
     cmds:
       - buf generate --template buf.gen.js.yaml proto
   proto-java:
+    desc: Generate codes for java
     cmds:
       - buf generate --template buf.gen.java.yaml buf.build/envoyproxy/protoc-gen-validate
       - buf generate --template buf.gen.java.yaml proto
 
   proto-check:
+    desc: Run linting on Protobuf files
     cmds:
       - buf lint proto
     silent: true
   proto-fmt:
+    desc: Format Protobuf files
     cmds:
       - buf format -w proto
     silent: true
 
   build:
+    desc: Build service
     preconditions:
       - sh: test {{.SERVICE_NAME}}
         msg: "SERVICE_NAME is required"
@@ -43,6 +55,7 @@ tasks:
     silent: true
 
   start:
+    desc: Start service
     preconditions:
       - sh: test {{.SERVICE_NAME}}
         msg: "SERVICE_NAME is required"
@@ -51,6 +64,7 @@ tasks:
     silent: true
 
   build-image:
+    desc: Build image for all platform
     preconditions:
       - sh: test {{.SERVICE_NAME}}
         msg: "SERVICE_NAME is required"

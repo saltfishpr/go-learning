@@ -47,24 +47,13 @@ func (e *Error) Format(s fmt.State, verb rune) {
 	st.Format(s, verb)
 }
 
-// Unwrap returns the cause of the error.
+// Unwrap provides compatibility for Go 1.13 error chains.
 func (e *Error) Unwrap() error {
 	return e.cause
 }
 
 func (e *Error) Cause() error {
 	return e.cause
-}
-
-func (e *Error) WithCause(cause error) *Error {
-	if cause == nil {
-		return e
-	}
-	return &Error{
-		s:     e.s,
-		md:    util.CloneMap(e.md),
-		cause: WithStack(cause),
-	}
 }
 
 func (e *Error) WithMetadataPair(key, value string) *Error {
@@ -96,6 +85,17 @@ func (e *Error) WithMetadata(md map[string]string) *Error {
 	}
 }
 
+func (e *Error) WithCause(cause error) *Error {
+	if cause == nil {
+		return e
+	}
+	return &Error{
+		s:     e.s,
+		md:    util.CloneMap(e.md),
+		cause: WithStack(cause),
+	}
+}
+
 // GRPCStatus returns the gRPC status of the error.
 func (e *Error) GRPCStatus() *status.Status {
 	if se, ok := e.cause.(interface {
@@ -107,7 +107,6 @@ func (e *Error) GRPCStatus() *status.Status {
 	if len(e.md) == 0 {
 		return e.s
 	}
-
 	s, err := e.s.WithDetails(&errdetails.ErrorInfo{
 		Metadata: e.md,
 	})

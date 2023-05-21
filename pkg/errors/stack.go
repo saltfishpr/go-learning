@@ -12,7 +12,7 @@ func WithStack(err error) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := err.(StackTracer); ok {
+	if HasStack(err) {
 		return err
 	}
 	return pkgerrors.WithStack(err)

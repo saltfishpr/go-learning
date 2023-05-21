@@ -22,7 +22,7 @@ func init() {
 }
 
 func NewInjector(cfgFile string) (*do.Injector, error) {
-	var injector *do.Injector
+	injector := do.New()
 
 	c := config.New(
 		config.WithSource(

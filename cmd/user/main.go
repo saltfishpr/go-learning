@@ -36,24 +36,25 @@ func main() {
 		panic(err)
 	}
 
-	var g run.Group
-
 	httpServer := server.NewHTTP(injector)
 	grpcServer := server.NewGRPC(injector)
 
 	logger := do.MustInvoke[*zap.Logger](injector)
 	config := do.MustInvoke[*conf.Config](injector)
 
+	addr := fmt.Sprintf(":%d", config.Port)
 	logger.Info(
 		"start to listen",
-		zap.Int("port", config.Port),
+		zap.String("addr", addr),
 		zap.String("log_level", logger.Level().String()),
 		zap.String("version", Version),
 	)
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", config.Port))
+	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		logger.Fatal("failed to listen", zap.Error(err))
 	}
+
+	var g run.Group
 	g.Add(func() error {
 		handler := h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {

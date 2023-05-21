@@ -25,7 +25,7 @@ func (s *UserService) CreateUser(
 	req *userv1.CreateUserRequest,
 ) (*userv1.User, error) {
 	u := &userv1.User{
-		Name:     "/user/1",
+		Name:     "users/1",
 		Username: "test",
 		Email:    "test@example.com",
 	}
@@ -37,7 +37,7 @@ func (s *UserService) GetUser(
 	req *userv1.GetUserRequest,
 ) (*userv1.User, error) {
 	u := &userv1.User{
-		Name:     "/user/1",
+		Name:     "users/1",
 		Username: "test",
 		Email:    "test@example.com",
 	}
