@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/logging"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
@@ -34,22 +33,22 @@ func NewGRPC(i *do.Injector) *grpc.Server {
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			MaxConnectionAge: 5 * time.Minute,
 		}),
-		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+		grpc.ChainUnaryInterceptor(
 			grpc_ctxtags.UnaryServerInterceptor(),
 			grpc_zap.UnaryServerInterceptor(do.MustInvoke[*zap.Logger](i), loggingOptions...),
 			grpc_zap.PayloadUnaryServerInterceptor(do.MustInvoke[*zap.Logger](i), unaryPayloadLoggingDecider()),
 			grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(recoverHandleFunc())),
 			grpc_auth.UnaryServerInterceptor(authFunc(do.MustInvoke[*conf.Config](i))),
 			_grpc_validator.UnaryServerInterceptor(),
-		)),
-		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
+		),
+		grpc.ChainStreamInterceptor(
 			grpc_ctxtags.StreamServerInterceptor(),
 			grpc_zap.StreamServerInterceptor(do.MustInvoke[*zap.Logger](i), loggingOptions...),
 			grpc_zap.PayloadStreamServerInterceptor(do.MustInvoke[*zap.Logger](i), streamPayloadLoggingDecider()),
 			grpc_recovery.StreamServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(recoverHandleFunc())),
 			grpc_auth.StreamServerInterceptor(authFunc(do.MustInvoke[*conf.Config](i))),
 			_grpc_validator.StreamServerInterceptor(),
-		)),
+		),
 	)
 
 	userv1.RegisterUserServiceServer(s, do.MustInvoke[*service.UserService](i))
