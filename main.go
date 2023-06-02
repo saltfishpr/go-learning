@@ -62,7 +62,7 @@ func main() {
 		// In this case, it passes them as errors to the Retry middleware.
 		middleware.Recoverer,
 
-		_middleware.NewSkyWalking(tracer, "consumer111", logger).Middleware,
+		_middleware.SkyWalking(tracer, "consumer111", "localhost", logger),
 	)
 
 	// For simplicity, we are using the gochannel Pub/Sub here,
@@ -104,6 +104,13 @@ func main() {
 }
 
 func publishMessages(publisher message.Publisher) {
+	publisher, _ = decorator.SkyWalkingPublisherDecorator(
+		go2sky.GetGlobalTracer(),
+		"greet_event",
+		"localhost",
+		zap.L(),
+	)(publisher)
+
 	for {
 		msg := message.NewMessage(watermill.NewUUID(), []byte("Hello, world!"))
 		middleware.SetCorrelationID(watermill.NewUUID(), msg)
@@ -122,14 +129,6 @@ func publishMessages(publisher message.Publisher) {
 		msg.SetContext(ctx)
 
 		log.Printf("sending message %s, correlation id: %s\n", msg.UUID, middleware.MessageCorrelationID(msg))
-
-		publisher = decorator.NewPublisherSkyWalkingDecorator(
-			publisher,
-			"greet_event",
-			"localhost",
-			go2sky.GetGlobalTracer(),
-			zap.L(),
-		)
 
 		if err := publisher.Publish("incoming_messages_topic", msg); err != nil {
 			panic(err)

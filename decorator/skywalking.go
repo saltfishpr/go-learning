@@ -1,7 +1,6 @@
 package decorator
 
 import (
-	"errors"
 	"time"
 
 	"github.com/SkyAPM/go2sky"
@@ -11,10 +10,11 @@ import (
 )
 
 // Ref: https://github.com/apache/skywalking/blob/master/oap-server/server-starter/src/main/resources/component-libraries.yml
-const componentIDGoMQPublisher = 5013
+const componentIDUnknown = 0
 
-type PublisherSkyWalkingDecorator struct {
-	pub    message.Publisher
+type skyWalkingPublisherDecorator struct {
+	pub message.Publisher
+
 	tracer *go2sky.Tracer
 
 	operationName string
@@ -24,23 +24,24 @@ type PublisherSkyWalkingDecorator struct {
 	logger *zap.Logger
 }
 
-func NewPublisherSkyWalkingDecorator(
-	pub message.Publisher,
+func SkyWalkingPublisherDecorator(
+	tracer *go2sky.Tracer,
 	operationName string,
 	peer string,
-	tracer *go2sky.Tracer,
 	logger *zap.Logger,
-) *PublisherSkyWalkingDecorator {
-	return &PublisherSkyWalkingDecorator{
-		pub:           pub,
-		tracer:        tracer,
-		operationName: operationName,
-		peer:          peer,
-		logger:        logger,
+) message.PublisherDecorator {
+	return func(pub message.Publisher) (message.Publisher, error) {
+		return &skyWalkingPublisherDecorator{
+			pub:           pub,
+			tracer:        tracer,
+			operationName: operationName,
+			peer:          peer,
+			logger:        logger,
+		}, nil
 	}
 }
 
-func (d *PublisherSkyWalkingDecorator) Publish(
+func (d *skyWalkingPublisherDecorator) Publish(
 	topic string,
 	messages ...*message.Message,
 ) (err error) {
@@ -48,42 +49,37 @@ func (d *PublisherSkyWalkingDecorator) Publish(
 		return d.pub.Publish(topic)
 	}
 
-	var errs []error
-	for _, msg := range messages {
-		errs = append(errs, d.publish(topic, msg))
-	}
-
-	return errors.Join(errs...)
-}
-
-func (d *PublisherSkyWalkingDecorator) publish(topic string, msg *message.Message) (err error) {
 	span, err := d.tracer.CreateExitSpan(
-		msg.Context(),
+		messages[0].Context(),
 		d.operationName,
 		d.peer,
 		func(headerKey, headerValue string) error {
-			msg.Metadata[headerKey] = headerValue
+			for _, msg := range messages {
+				msg.Metadata[headerKey] = headerValue
+			}
 			return nil
 		},
 	)
 	if err != nil {
 		d.logger.Error("create exit span error", zap.Error(err))
-		return d.pub.Publish(topic, msg)
+		return d.pub.Publish(topic, messages...)
 	}
 
 	defer span.End()
 
-	span.SetComponent(componentIDGoMQPublisher)
-	span.SetSpanLayer(agentv3.SpanLayer_MQ) // 4
+	span.SetComponent(componentIDUnknown)
+	span.SetSpanLayer(agentv3.SpanLayer_MQ)
+	span.Tag(go2sky.TagMQTopic, topic)
+
 	defer func() {
 		if err != nil {
 			span.Error(time.Now(), err.Error())
 		}
 	}()
 
-	return d.pub.Publish(topic, msg)
+	return d.pub.Publish(topic, messages...)
 }
 
-func (d *PublisherSkyWalkingDecorator) Close() error {
+func (d *skyWalkingPublisherDecorator) Close() error {
 	return d.pub.Close()
 }
