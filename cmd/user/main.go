@@ -18,6 +18,7 @@ import (
 	"github.com/saltfishpr/go-learning/internal/user"
 	"github.com/saltfishpr/go-learning/internal/user/conf"
 	"github.com/saltfishpr/go-learning/internal/user/server"
+	"github.com/saltfishpr/go-learning/pkg/util"
 )
 
 var Version string
@@ -30,8 +31,9 @@ func init() {
 
 func main() {
 	flag.Parse()
+	ctx := util.ContextForSignal(os.Interrupt)
 
-	injector, err := user.NewInjector(cfgFile)
+	injector, err := user.NewInjector(ctx, cfgFile)
 	if err != nil {
 		panic(err)
 	}

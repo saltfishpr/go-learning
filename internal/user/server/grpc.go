@@ -13,6 +13,7 @@ import (
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"github.com/samber/do"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
@@ -34,6 +35,7 @@ func NewGRPC(i *do.Injector) *grpc.Server {
 			MaxConnectionAge: 5 * time.Minute,
 		}),
 		grpc.ChainUnaryInterceptor(
+			otelgrpc.UnaryServerInterceptor(),
 			grpc_ctxtags.UnaryServerInterceptor(),
 			grpc_zap.UnaryServerInterceptor(do.MustInvoke[*zap.Logger](i), loggingOptions...),
 			grpc_zap.PayloadUnaryServerInterceptor(do.MustInvoke[*zap.Logger](i), unaryPayloadLoggingDecider()),
@@ -42,6 +44,7 @@ func NewGRPC(i *do.Injector) *grpc.Server {
 			_grpc_validator.UnaryServerInterceptor(),
 		),
 		grpc.ChainStreamInterceptor(
+			otelgrpc.StreamServerInterceptor(),
 			grpc_ctxtags.StreamServerInterceptor(),
 			grpc_zap.StreamServerInterceptor(do.MustInvoke[*zap.Logger](i), loggingOptions...),
 			grpc_zap.PayloadStreamServerInterceptor(do.MustInvoke[*zap.Logger](i), streamPayloadLoggingDecider()),
