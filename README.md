@@ -1,3 +1,5 @@
-# learning
+# WASM
 
-There is no end to go for learning.
+```shell
+GOOS=wasip1 GOARCH=wasm go build -o learning.wasm
+```
