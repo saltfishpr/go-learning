@@ -10,6 +10,8 @@ import (
 	"os/exec"
 	"path"
 	"sort"
+	"strings"
+	"time"
 
 	"github.com/samber/lo"
 	"github.com/schollz/progressbar/v3"
@@ -22,7 +24,7 @@ type loader struct {
 	fileName     string // TimeZoneDB.csv.zip
 }
 
-func (l *loader) Load() ([]*Zone, error) {
+func (l *loader) Load() ([]*TimeZone, error) {
 	const dataDir = "data"
 
 	if l.downloadData {
@@ -39,11 +41,40 @@ func (l *loader) Load() ([]*Zone, error) {
 	keys := lo.Keys(zones)
 	sort.Strings(keys)
 
-	res := make([]*Zone, 0, len(zones))
+	var res []*TimeZone
 	for _, key := range keys {
-		res = append(res, zones[key])
+		zone := zones[key]
+		for _, trans := range zone.Trans {
+			cityName, err := lo.Last(strings.Split(zone.Name, "/"))
+			if err != nil {
+				return nil, err
+			}
+			displayName := fmt.Sprintf("(UTC%s) %s", getTimeZoneOffsetString(trans.Offset), cityName)
+
+			startTime := time.Unix(trans.StartTime, 0).UTC().Add(time.Duration(trans.Offset) * time.Second).Format(time.DateTime)
+			var endTime string
+			if trans.EndTime != nil {
+				endTime = time.Unix(*trans.EndTime, 0).UTC().Add(time.Duration(trans.Offset) * time.Second).Format(time.DateTime)
+			}
+			res = append(res, &TimeZone{
+				Name:         zone.Name,
+				DisplayName:  displayName,
+				Abbreviation: trans.Abbreviation,
+				StartTime:    startTime,
+				EndTime:      endTime,
+				Offset:       trans.Offset / 60,
+			})
+		}
 	}
 	return res, nil
+}
+
+func getTimeZoneOffsetString(offset int) string {
+	if offset < 0 {
+		offset = -offset
+		return fmt.Sprintf("-%02d:%02d", offset/3600, (offset%3600)/60)
+	}
+	return fmt.Sprintf("+%02d:%02d", offset/3600, (offset%3600)/60)
 }
 
 func (l *loader) prepareData(dir string) error {
@@ -81,7 +112,20 @@ func (l *loader) prepareData(dir string) error {
 	return nil
 }
 
-func (l *loader) load(dataDir string) (map[string]*Zone, error) {
+type loaderZone struct {
+	Name  string
+	Trans []*loaderZoneTran
+}
+
+type loaderZoneTran struct {
+	Abbreviation string // 时区缩写
+	StartTime    int64  // 开始时间, 单位 s
+	EndTime      *int64 // 开始时间, 单位 s, nil 表示没有结束时间
+	Offset       int    // 偏移量, 单位 s
+	IsDST        bool   // 是否是夏令时
+}
+
+func (l *loader) load(dataDir string) (map[string]*loaderZone, error) {
 	const (
 		countryFile  = "country.csv"
 		timeZoneFile = "time_zone.csv"
@@ -98,17 +142,19 @@ func (l *loader) load(dataDir string) (map[string]*Zone, error) {
 		timeZoneName timeZoneColumn = iota
 		timeZoneCountryCode
 		timeZoneAbbreviation
-		timeZoneStartUTC
+		timeZoneStartTime
 		timeZoneOffset
 		timeZoneIsDST
 	)
 
-	zones := make(map[string]*Zone, 10)
+	zones := make(map[string]*loaderZone, 10)
 	f, err := os.Open(path.Join(dataDir, timeZoneFile))
 	if err != nil {
 		return nil, err
 	}
 	r := csv.NewReader(f)
+
+	var lastZoneTran *loaderZoneTran
 	for {
 		row, err := r.Read()
 		if err != nil {
@@ -120,18 +166,25 @@ func (l *loader) load(dataDir string) (map[string]*Zone, error) {
 
 		zone, ok := zones[row[timeZoneName]]
 		if !ok {
-			zone = &Zone{
+			zone = &loaderZone{
 				Name: row[timeZoneName],
 			}
 			zones[row[timeZoneName]] = zone
 		}
-		zoneTran := &ZoneTran{
+		zoneTran := &loaderZoneTran{
 			Abbreviation: row[timeZoneAbbreviation],
-			StartUTC:     cast.ToInt64(row[timeZoneStartUTC]),
+			StartTime:    cast.ToInt64(row[timeZoneStartTime]),
+			EndTime:      nil,
 			Offset:       cast.ToInt(row[timeZoneOffset]),
 			IsDST:        row[timeZoneIsDST] == "1",
 		}
 		zone.Trans = append(zone.Trans, zoneTran)
+
+		if lastZoneTran != nil {
+			lastEndTime := zoneTran.StartTime - 1
+			lastZoneTran.EndTime = &lastEndTime
+		}
+		lastZoneTran = zoneTran
 	}
 
 	return zones, nil
