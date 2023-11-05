@@ -132,7 +132,7 @@ func (r *MysqlRepo) UpdateTimeZone(ctx context.Context, tz *TimeZone, fields []s
 	if lo.Contains(fields, "isDST") {
 		model.IsDST = cast.ToInt8(tz.IsDST)
 	}
-	if err := tx.Updates(model).Error; err != nil {
+	if err := tx.Save(model).Error; err != nil {
 		return nil, err
 	}
 	return model.toTimeZone(), nil
@@ -144,11 +144,21 @@ func (r *MysqlRepo) DeleteTimeZone(ctx context.Context, id string) error {
 	return tx.Where("ID = ?", id).Delete(&mysqlTimeZoneInfo{}).Error
 }
 
-func (r *MysqlRepo) ListTimeZones(ctx context.Context) ([]*TimeZone, error) {
+func (r *MysqlRepo) GetTimeZone(ctx context.Context, id string) (*TimeZone, error) {
+	tx := r.db
+
+	model := new(mysqlTimeZoneInfo)
+	if err := tx.Where("ID = ?", id).First(model).Error; err != nil {
+		return nil, err
+	}
+	return model.toTimeZone(), nil
+}
+
+func (r *MysqlRepo) ListTimeZones(ctx context.Context, offset int, limit int) ([]*TimeZone, error) {
 	tx := r.db
 
 	var res []*mysqlTimeZoneInfo
-	if err := tx.Find(&res).Error; err != nil {
+	if err := tx.Offset(offset).Limit(limit).Find(&res).Error; err != nil {
 		return nil, err
 	}
 	return lo.Map(res, func(item *mysqlTimeZoneInfo, _ int) *TimeZone {

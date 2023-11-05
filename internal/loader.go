@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -32,9 +33,9 @@ func NewLoader(dataDir string, baseURL string, fileName string) *loader {
 	}
 }
 
-func (l *loader) Load(downloadData bool) ([]*TimeZone, error) {
+func (l *loader) Load(ctx context.Context, downloadData bool) ([]*TimeZone, error) {
 	if downloadData {
-		if err := l.prepareData(l.dataDir); err != nil {
+		if err := l.prepareData(ctx, l.dataDir); err != nil {
 			return nil, err
 		}
 	}
@@ -87,16 +88,20 @@ func getTimeZoneOffsetString(offset int) string {
 	return fmt.Sprintf("+%02d:%02d", offset/3600, (offset%3600)/60)
 }
 
-func (l *loader) prepareData(dir string) error {
+func (l *loader) prepareData(ctx context.Context, dir string) error {
 	downloadPath := path.Join(os.TempDir(), l.fileName)
 	if _, err := os.Stat(downloadPath); err == nil {
-		log.Println("old time zone db file found, removing")
+		log.Println("old timezone db file found, removing")
 		if err := os.Remove(downloadPath); err != nil {
-			return fmt.Errorf("remove old time zone db file error: %w", err)
+			return fmt.Errorf("remove old timezone db file error: %w", err)
 		}
 	}
 
-	resp, err := http.Get(l.baseURL + "/files/" + l.fileName)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, l.baseURL+"/files/"+l.fileName, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -108,7 +113,7 @@ func (l *loader) prepareData(dir string) error {
 	}
 	defer f.Close()
 
-	log.Printf("downloading time zone db file to %s\n", downloadPath)
+	log.Printf("downloading timezone db file to %s\n", downloadPath)
 	bar := progressbar.DefaultBytes(resp.ContentLength, "downloading")
 	if _, err := io.Copy(io.MultiWriter(f, bar), resp.Body); err != nil {
 		return fmt.Errorf("download error: %w", err)
@@ -145,7 +150,7 @@ func (l *loader) loadFromDir(dataDir string) (map[string]*loaderZone, error) {
 	return parseTimeZones(f)
 }
 
-// parseTimeZones parse time zone csv file.
+// parseTimeZones parse timezone csv file.
 func parseTimeZones(reader io.Reader) (map[string]*loaderZone, error) {
 	type timeZoneColumn int
 	const (

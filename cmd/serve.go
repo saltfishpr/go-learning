@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 
 	"learning/internal"
 
@@ -40,7 +41,7 @@ import (
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "Start time zone http server",
+	Short: "Start timezone http server",
 
 	SilenceErrors: true,
 	SilenceUsage:  true,
@@ -75,6 +76,9 @@ var serveCmd = &cobra.Command{
 
 		e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{}))
 		e.Use(internal.Logger(logger))
+		e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
+			Timeout: 5 * time.Second,
+		}))
 
 		e.GET("/liveness", func(c echo.Context) error {
 			return c.String(http.StatusOK, "OK")
@@ -83,6 +87,7 @@ var serveCmd = &cobra.Command{
 		e.POST("/timezones", handler.CreateTimeZone)
 		e.PATCH("/timezones/:id", handler.UpdateTimeZone)
 		e.DELETE("/timezones/:id", handler.DeleteTimeZone)
+		e.GET("/timezones/:id", handler.GetTimeZone)
 		e.GET("/timezones", handler.ListTimeZones)
 		e.GET("/timezones:load", handler.LoadTimeZones)
 
