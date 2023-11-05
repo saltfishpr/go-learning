@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"encoding/csv"
@@ -6,12 +6,12 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/samber/lo"
 	"github.com/schollz/progressbar/v3"
@@ -19,21 +19,27 @@ import (
 )
 
 type loader struct {
-	downloadData bool
-	baseURL      string // https://timezonedb.com
-	fileName     string // TimeZoneDB.csv.zip
+	dataDir  string
+	baseURL  string // https://timezonedb.com
+	fileName string // TimeZoneDB.csv.zip
 }
 
-func (l *loader) Load() ([]*TimeZone, error) {
-	const dataDir = "data"
+func NewLoader(dataDir string, baseURL string, fileName string) *loader {
+	return &loader{
+		dataDir:  dataDir,
+		baseURL:  baseURL,
+		fileName: fileName,
+	}
+}
 
-	if l.downloadData {
-		if err := l.prepareData(dataDir); err != nil {
+func (l *loader) Load(downloadData bool) ([]*TimeZone, error) {
+	if downloadData {
+		if err := l.prepareData(l.dataDir); err != nil {
 			return nil, err
 		}
 	}
 
-	zones, err := l.load(dataDir)
+	zones, err := l.loadFromDir(l.dataDir)
 	if err != nil {
 		return nil, err
 	}
@@ -51,10 +57,12 @@ func (l *loader) Load() ([]*TimeZone, error) {
 			}
 			displayName := fmt.Sprintf("(UTC%s) %s", getTimeZoneOffsetString(trans.Offset), cityName)
 
-			startTime := time.Unix(trans.StartTime, 0).UTC().Add(time.Duration(trans.Offset) * time.Second).Format(time.DateTime)
+			startTime := TimestampToTimeString(trans.StartTime, trans.Offset)
 			var endTime string
 			if trans.EndTime != nil {
-				endTime = time.Unix(*trans.EndTime, 0).UTC().Add(time.Duration(trans.Offset) * time.Second).Format(time.DateTime)
+				endTime = TimestampToTimeString(*trans.EndTime, trans.Offset)
+			} else {
+				endTime = MaxTimeString
 			}
 			res = append(res, &TimeZone{
 				Name:         zone.Name,
@@ -62,7 +70,9 @@ func (l *loader) Load() ([]*TimeZone, error) {
 				Abbreviation: trans.Abbreviation,
 				StartTime:    startTime,
 				EndTime:      endTime,
+				IsDST:        trans.IsDST,
 				Offset:       trans.Offset / 60,
+				Source:       lo.Must(url.Parse(l.baseURL)).Host,
 			})
 		}
 	}
@@ -125,18 +135,18 @@ type loaderZoneTran struct {
 	IsDST        bool   // 是否是夏令时
 }
 
-func (l *loader) load(dataDir string) (map[string]*loaderZone, error) {
-	const (
-		countryFile  = "country.csv"
-		timeZoneFile = "time_zone.csv"
-	)
+func (l *loader) loadFromDir(dataDir string) (map[string]*loaderZone, error) {
+	const timeZoneFile = "time_zone.csv"
+	f, err := os.Open(path.Join(dataDir, timeZoneFile))
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return parseTimeZones(f)
+}
 
-	type countryColumn int
-	const (
-		countryCode countryColumn = iota
-		countryName
-	)
-
+// parseTimeZones parse time zone csv file.
+func parseTimeZones(reader io.Reader) (map[string]*loaderZone, error) {
 	type timeZoneColumn int
 	const (
 		timeZoneName timeZoneColumn = iota
@@ -147,13 +157,10 @@ func (l *loader) load(dataDir string) (map[string]*loaderZone, error) {
 		timeZoneIsDST
 	)
 
-	zones := make(map[string]*loaderZone, 10)
-	f, err := os.Open(path.Join(dataDir, timeZoneFile))
-	if err != nil {
-		return nil, err
-	}
-	r := csv.NewReader(f)
+	r := csv.NewReader(reader)
 
+	zones := make(map[string]*loaderZone, 10)
+	var lastZoneName string
 	var lastZoneTran *loaderZoneTran
 	for {
 		row, err := r.Read()
@@ -180,10 +187,11 @@ func (l *loader) load(dataDir string) (map[string]*loaderZone, error) {
 		}
 		zone.Trans = append(zone.Trans, zoneTran)
 
-		if lastZoneTran != nil {
-			lastEndTime := zoneTran.StartTime - 1
+		if lastZoneTran != nil && lastZoneName == zone.Name {
+			lastEndTime := zoneTran.StartTime
 			lastZoneTran.EndTime = &lastEndTime
 		}
+		lastZoneName = zone.Name
 		lastZoneTran = zoneTran
 	}
 

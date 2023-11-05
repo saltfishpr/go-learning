@@ -1,3 +1,3 @@
-# learning
+# eztz
 
-There is no end to go for learning.
+让时区管理变得简单
