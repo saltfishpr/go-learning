@@ -57,10 +57,10 @@ func (l *loader) Load(downloadData bool) ([]*TimeZone, error) {
 			}
 			displayName := fmt.Sprintf("(UTC%s) %s", getTimeZoneOffsetString(trans.Offset), cityName)
 
-			startTime := TimestampToTimeString(trans.StartTime, trans.Offset)
+			startTime := TimestampToTimeString(trans.StartTime, trans.Offset/60)
 			var endTime string
 			if trans.EndTime != nil {
-				endTime = TimestampToTimeString(*trans.EndTime, trans.Offset)
+				endTime = TimestampToTimeString(*trans.EndTime, trans.Offset/60)
 			} else {
 				endTime = MaxTimeString
 			}
