@@ -19,5 +19,15 @@ bin/eztz convert --timezone America/Los_Angeles '2022-11-06 01:30:00'
 serve
 
 ```shell
-bin/eztz serve --config=config.yaml
+bin/eztz serve
+```
+
+```shell
+# load timezones from net
+curl --location 'http://localhost:8080/timezones:load?download=true'
+```
+
+```shell
+# list timezones
+curl --location 'http://localhost:8080/timezones?t=123456'
 ```

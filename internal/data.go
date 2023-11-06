@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/samber/do"
@@ -237,4 +238,119 @@ func (r *MysqlRepo) timeZones2MysqlTimeZoneInfos(tzs []*TimeZone) ([]*mysqlTimeZ
 		res = append(res, model)
 	}
 	return res, nil
+}
+
+// -----------------------------------------------------------------------------
+
+type MemoryRepo struct {
+	data map[string]*TimeZone
+}
+
+var _ Repo = (*MemoryRepo)(nil)
+
+func NewMemoryRepo(i *do.Injector) (*MemoryRepo, error) {
+	return &MemoryRepo{
+		data: map[string]*TimeZone{},
+	}, nil
+}
+
+func (r *MemoryRepo) CreateTimeZone(ctx context.Context, tz *TimeZone) (*TimeZone, error) {
+	r.data[tz.ID] = tz
+	return tz, nil
+}
+
+func (r *MemoryRepo) UpdateTimeZone(ctx context.Context, tz *TimeZone, fields []string) (*TimeZone, error) {
+	current, err := r.GetTimeZone(ctx, tz.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if lo.Contains(fields, "name") {
+		current.Name = tz.Name
+	}
+	if lo.Contains(fields, "displayName") {
+		current.DisplayName = tz.DisplayName
+	}
+	if lo.Contains(fields, "abbreviation") {
+		current.Abbreviation = tz.Abbreviation
+	}
+	if lo.Contains(fields, "offset") {
+		current.Offset = tz.Offset // 优先更新 offset
+	}
+	if lo.Contains(fields, "startTime") {
+		current.StartTime = tz.StartTime
+	}
+	if lo.Contains(fields, "endTime") {
+		current.EndTime = tz.EndTime
+	}
+	if lo.Contains(fields, "isDST") {
+		current.IsDST = tz.IsDST
+	}
+	return current, nil
+}
+
+func (r *MemoryRepo) DeleteTimeZone(ctx context.Context, id string) error {
+	delete(r.data, id)
+	return nil
+}
+
+func (r *MemoryRepo) GetTimeZone(ctx context.Context, id string) (*TimeZone, error) {
+	tz, ok := r.data[id]
+	if !ok {
+		return nil, errors.New("not found")
+	}
+	return tz, nil
+}
+
+func (r *MemoryRepo) ListTimeZones(ctx context.Context, offset int, limit int) ([]*TimeZone, error) {
+	ids := lo.Keys(r.data)
+	sort.Strings(ids)
+
+	var res []*TimeZone
+	for i := offset; i < offset+limit && i < len(r.data); i++ {
+		res = append(res, r.data[ids[i]])
+	}
+	return res, nil
+}
+
+func (r *MemoryRepo) ListTimeZonesByTimestamp(ctx context.Context, sec int64) ([]*TimeZone, error) {
+	ids := lo.Keys(r.data)
+	sort.Strings(ids)
+
+	var res []*TimeZone
+	for _, id := range ids {
+		tz := r.data[id]
+
+		startSec, err := TimeString2Timestamp(tz.StartTime, tz.Offset)
+		if err != nil {
+			return nil, err
+		}
+		endSec, err := TimeString2Timestamp(tz.EndTime, tz.Offset)
+		if err != nil {
+			return nil, err
+		}
+
+		if startSec <= sec && endSec > sec {
+			res = append(res, tz)
+		}
+	}
+	return res, nil
+}
+
+func (r *MemoryRepo) Count(ctx context.Context) (int64, error) {
+	return int64(len(r.data)), nil
+}
+
+func (r *MemoryRepo) ReplaceAllBySource(ctx context.Context, tzs []*TimeZone, source string) error {
+	newData := map[string]*TimeZone{}
+	for k, v := range r.data {
+		if v.Source != source {
+			newData[k] = v
+		}
+	}
+	for _, tz := range tzs {
+		newData[tz.ID] = tz
+	}
+	r.data = newData
+	return nil
 }

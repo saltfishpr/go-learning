@@ -64,7 +64,11 @@ var serveCmd = &cobra.Command{
 		do.ProvideValue[*slog.Logger](i, logger)
 
 		do.Provide[internal.Repo](i, func(i *do.Injector) (internal.Repo, error) {
-			return internal.NewMysqlRepo(i)
+			if config.Persistent {
+				return internal.NewMysqlRepo(i)
+			} else {
+				return internal.NewMemoryRepo(i)
+			}
 		})
 		do.Provide[*internal.Handler](i, internal.NewHandler)
 

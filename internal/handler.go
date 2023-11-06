@@ -156,6 +156,14 @@ func (h *Handler) ListTimeZones(c echo.Context) error {
 }
 
 func (h *Handler) LoadTimeZones(c echo.Context) error {
+	type request struct {
+		Download bool `query:"download"`
+	}
+	req := new(request)
+	if err := c.Bind(req); err != nil {
+		return echo.ErrBadRequest.WithInternal(err)
+	}
+
 	if h.taskMu.TryLock() && h.loadTask != nil {
 		defer h.taskMu.Unlock()
 		return c.JSON(http.StatusOK, h.loadTask)
@@ -181,7 +189,7 @@ func (h *Handler) LoadTimeZones(c echo.Context) error {
 			h.loadTask = nil
 		}()
 
-		tzs, err := loader.Load(ctx, false)
+		tzs, err := loader.Load(ctx, req.Download)
 		if err != nil {
 			LoggerFromContext(ctx).Error("load data error", slog.Any("error", err))
 			return

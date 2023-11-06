@@ -1,11 +1,12 @@
 package internal
 
 type Config struct {
-	Host     string      `yaml:"host"`
-	Port     int         `yaml:"port"`
-	LogLevel string      `yaml:"log_level"`
-	CacheDir string      `yaml:"cache_dir"`
-	DB       MySQLConfig `yaml:"db"`
+	Host       string      `yaml:"host"`
+	Port       int         `yaml:"port"`
+	LogLevel   string      `yaml:"log_level"`
+	CacheDir   string      `yaml:"cache_dir"`
+	Persistent bool        `yaml:"persistent"`
+	DB         MySQLConfig `yaml:"db"`
 }
 
 type MySQLConfig struct {
