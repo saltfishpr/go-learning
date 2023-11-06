@@ -36,9 +36,9 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "eztz",
-	Short: "时区工具",
-	Long:  `从 timezonedb.com 加载时区信息，提供 HTTP 接口获取时区信息`,
+	Use:     "eztz",
+	Short:   "Make your life easier when dealing with timezones",
+	Version: "v0.0.1",
 
 	SilenceErrors: true,
 	SilenceUsage:  true,
@@ -65,15 +65,7 @@ func init() {
 		return ErrSilent
 	})
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.learning.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -97,5 +89,12 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	}
+}
+
+func checkBindError(err error) {
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }

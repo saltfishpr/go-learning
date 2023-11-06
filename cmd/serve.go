@@ -42,9 +42,6 @@ import (
 var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start timezone http server",
-
-	SilenceErrors: true,
-	SilenceUsage:  true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		i := do.New()
 
@@ -74,8 +71,34 @@ var serveCmd = &cobra.Command{
 		e := echo.New()
 		e.HideBanner = true
 
-		e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{}))
-		e.Use(internal.Logger(logger))
+		e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+			LogURI:     true,
+			LogStatus:  true,
+			LogError:   true,
+			LogLatency: true,
+			BeforeNextFunc: func(c echo.Context) {
+				ctx := c.Request().Context()
+				ctx = internal.LoggerToContext(ctx, logger)
+				c.SetRequest(c.Request().WithContext(ctx))
+			},
+			LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+				ctx := c.Request().Context()
+				requestGroup := slog.Group("request", slog.String("uri", v.URI), slog.Int("status", v.Status), slog.Duration("status", v.Latency))
+				if v.Error == nil {
+					internal.LoggerFromContext(ctx).InfoContext(ctx, "success", requestGroup)
+				} else {
+					internal.LoggerFromContext(ctx).ErrorContext(ctx, "failure", requestGroup, slog.Any("error", v.Error))
+				}
+				return nil
+			},
+		}))
+		e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
+			DisableStackAll: true,
+			LogErrorFunc: func(c echo.Context, err error, stack []byte) error {
+				logger.Error("PANIC RECOVER", slog.Any("error", err), slog.String("stack", string(stack)))
+				return echo.ErrInternalServerError.WithInternal(err)
+			},
+		}))
 		e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 			Timeout: 5 * time.Second,
 		}))

@@ -19,17 +19,51 @@ import (
 	"github.com/spf13/cast"
 )
 
-type loader struct {
-	dataDir  string
-	baseURL  string // https://timezonedb.com
-	fileName string // TimeZoneDB.csv.zip
+var defaultLoaderOptions = &LoaderOptions{
+	baseURL:  "https://timezonedb.com",
+	fileName: "TimeZoneDB.csv.zip",
 }
 
-func NewLoader(dataDir string, baseURL string, fileName string) *loader {
+type LoaderOptions struct {
+	baseURL  string
+	fileName string
+}
+
+type LoaderOption func(*LoaderOptions)
+
+func WithBaseURL(baseURL string) LoaderOption {
+	return func(o *LoaderOptions) {
+		o.baseURL = baseURL
+	}
+}
+
+func WithFileName(fileName string) LoaderOption {
+	return func(o *LoaderOptions) {
+		o.fileName = fileName
+	}
+}
+
+func evaluateLoaderOptions(opts ...LoaderOption) LoaderOptions {
+	// default options
+	options := *defaultLoaderOptions
+	for _, o := range opts {
+		o(&options)
+	}
+	return options
+}
+
+type loader struct {
+	dataDir  string
+	baseURL  string
+	fileName string
+}
+
+func NewLoader(dataDir string, opts ...LoaderOption) *loader {
+	opt := evaluateLoaderOptions(opts...)
 	return &loader{
 		dataDir:  dataDir,
-		baseURL:  baseURL,
-		fileName: fileName,
+		baseURL:  opt.baseURL,
+		fileName: opt.fileName,
 	}
 }
 

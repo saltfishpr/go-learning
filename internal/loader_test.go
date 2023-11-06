@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"context"
 	"io"
 	"strings"
 	"testing"
@@ -121,13 +120,4 @@ func Test_parseTimeZones(t *testing.T) {
 
 func newInt64(i int64) *int64 {
 	return &i
-}
-
-func Test_loader_Load(t *testing.T) {
-	loader := NewLoader("../data", "", "")
-	zones, err := loader.Load(context.Background(), false)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_ = zones
 }

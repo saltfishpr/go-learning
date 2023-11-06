@@ -161,11 +161,7 @@ func (h *Handler) LoadTimeZones(c echo.Context) error {
 		return c.JSON(http.StatusOK, h.loadTask)
 	}
 
-	loader := NewLoader(
-		h.cacheDir,
-		"https://timezonedb.com",
-		"TimeZoneDB.csv.zip",
-	)
+	loader := NewLoader(h.cacheDir)
 
 	ctx := context.Background()
 	ctx = LoggerToContext(ctx, LoggerFromContext(c.Request().Context()))
