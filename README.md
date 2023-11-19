@@ -19,7 +19,7 @@ cd go-learning
 Linux:
 
 ```shell
-LIB_FOLDER="$(pwd)/lib/$(uname -s)-$(uname -m)" && C_INCLUDE_PATH=$LIB_FOLDER LIBRARY_PATH=$LIB_FOLDER go build -o go-whisper
+LIB_FOLDER="$(pwd)/lib/$(uname -s)-$(uname -m)" && C_INCLUDE_PATH=$LIB_FOLDER LIBRARY_PATH=$LIB_FOLDER go build -ldflags "-s -w" -o go-whisper
 ```
 
 Windows:

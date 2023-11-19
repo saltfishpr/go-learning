@@ -27,6 +27,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -35,8 +36,8 @@ import (
 
 	"github.com/ggerganov/whisper.cpp/bindings/go/pkg/whisper"
 	"github.com/go-audio/wav"
-	"github.com/go-resty/resty/v2"
 	"github.com/samber/lo"
+	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/vansante/go-ffprobe.v2"
@@ -74,6 +75,11 @@ var models = map[string]Model{
 		url:      "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large.bin",
 		checksum: "", // TODO
 	},
+	"largev3": {
+		name:     "ggml-large.bin",
+		url:      "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin",
+		checksum: "",
+	},
 }
 
 var (
@@ -83,9 +89,10 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "go-whisper",
-	Short: "go-whisper can transcribe audio to text",
-	Long:  `go-whisper can transcribe audio to text`,
+	Use:     "go-whisper",
+	Short:   "go-whisper can transcribe audio to text",
+	Long:    `go-whisper can transcribe audio to text`,
+	Version: "v0.1.1",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -220,7 +227,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		wc.ResetTimings()
-		if err := wc.Process(data, cb); err != nil {
+		if err := wc.Process(data, cb, nil); err != nil {
 			return err
 		}
 		wc.PrintTimings()
@@ -311,14 +318,26 @@ func sha256sum(fileName string) (string, error) {
 
 func downloadModel(ctx context.Context, folder string, model string) error {
 	modelPath := path.Join(folder, models[model].name)
-	fmt.Printf("downloading model %s to %s \n", model, modelPath)
-	client := resty.New()
-	_, err := client.R().
-		SetContext(ctx).
-		SetOutput(modelPath).
-		Get(models[model].url)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, models[model].url, nil)
 	if err != nil {
-		_ = os.Remove(modelPath)
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	f, err := os.OpenFile(modelPath, os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return fmt.Errorf("create temp file error: %w", err)
+	}
+	defer f.Close()
+
+	fmt.Printf("downloading model %s to %s \n", model, modelPath)
+	bar := progressbar.DefaultBytes(resp.ContentLength, "downloading")
+	if _, err := io.Copy(io.MultiWriter(f, bar), resp.Body); err != nil {
 		return fmt.Errorf("download model %s failed: %w", model, err)
 	}
 	return nil
