@@ -2,151 +2,167 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"log"
+	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
-	"github.com/gofiber/websocket/v2"
 )
 
-func init() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-}
-
 func main() {
-	ctx := context.Background()
-	cancelCtx, cancel := context.WithCancel(ctx)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
 
-	// Create a new hub
-	hub := NewHub()
-	go hub.Start(cancelCtx)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		AddSource: true,
+		Level:     slog.LevelInfo,
+	}))
+
+	hub := NewHub(logger)
+	go hub.Start(ctx)
 
 	app := fiber.New()
 	app.Use(pprof.New())
-	app.Use(func(c *fiber.Ctx) error {
-		if websocket.IsWebSocketUpgrade(c) { // Returns true if the client requested upgrade to the WebSocket protocol
+	app.Use("/ws", func(c *fiber.Ctx) error {
+		if websocket.IsWebSocketUpgrade(c) {
 			return c.Next()
 		}
 		return c.SendStatus(fiber.StatusUpgradeRequired)
 	})
+	app.Get("/ws", websocket.New(hub.HandleConn, websocket.Config{
+		HandshakeTimeout: 10 * time.Second,
+		RecoverHandler: func(conn *websocket.Conn) {
+			if err := recover(); err != nil {
+				_ = conn.WriteJSON(fiber.Map{
+					"error": fmt.Sprintf("%+v", err),
+				})
+			}
+		},
+	}))
 
-	// Upgraded websocket request
-	app.Get("/ws", websocket.New(hub.Handle))
-
-	// ws://localhost:3000/ws
 	go func() {
 		if err := app.Listen("localhost:3000"); err != nil {
-			log.Fatal(err)
+			panic(err)
 		}
 	}()
 
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt)
-	<-sig
+	<-ctx.Done()
 
-	select {
-	case <-shutdown(app):
-		log.Println("server shutdown")
-		cancel()
-	case <-time.After(5 * time.Second):
-		log.Println("server shutdown timeout")
+	if err := app.ShutdownWithTimeout(10 * time.Second); err != nil {
+		logger.Error("shutdown error", slog.Any("err", err))
 	}
 }
 
-func shutdown(app *fiber.App) <-chan struct{} {
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		if err := app.Shutdown(); err != nil {
-			log.Println("shutdown error:", err)
-		}
-	}()
-	return done
+type Client struct {
+	logger *slog.Logger
+
+	hub *Hub
+
+	conn     *websocket.Conn
+	userId   string
+	deviceId string
 }
 
-type Hub struct {
-	registerCh   chan *websocket.Conn
-	unregisterCh chan *websocket.Conn
-	broadcastCh  chan []byte
-
-	conns map[*websocket.Conn]bool
-}
-
-func NewHub() *Hub {
-	return &Hub{
-		registerCh:   make(chan *websocket.Conn),
-		unregisterCh: make(chan *websocket.Conn),
-		broadcastCh:  make(chan []byte),
-		conns:        make(map[*websocket.Conn]bool),
-	}
-}
-
-func (h *Hub) Start(ctx context.Context) {
-	// broadcast message every 3 seconds
-	go func() {
-		ticker := time.NewTicker(3 * time.Second)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				payload, _ := json.Marshal(map[string]string{
-					"event":   "CHAT_MSG",
-					"user":    "server",
-					"message": "hello, this is server",
-				})
-				h.broadcastCh <- payload
-			}
-		}
-	}()
-
+func (c *Client) Listen() {
 	for {
-		select {
-		case <-ctx.Done():
-			for conn := range h.conns {
-				conn.Close()
-			}
-			return
-		case conn := <-h.registerCh:
-			h.conns[conn] = true
-		case conn := <-h.unregisterCh:
-			delete(h.conns, conn)
-		case message := <-h.broadcastCh:
-			for conn := range h.conns {
-				if err := conn.WriteMessage(websocket.TextMessage, message); err != nil {
-					log.Println("write error:", err)
-				}
-			}
-		}
-	}
-}
-
-func (h *Hub) Handle(c *websocket.Conn) {
-	// When the function returns, unregister the client and close the connection
-	defer func() {
-		h.unregisterCh <- c
-		c.Close()
-	}()
-
-	// Register the client
-	h.registerCh <- c
-
-	for {
-		messageType, payload, err := c.ReadMessage()
+		messageType, payload, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Println("read error:", err)
+				c.logger.Error("read error", slog.Any("err", err))
 			}
 			return
 		}
 
 		switch messageType {
+		case websocket.PingMessage:
+			if err := c.conn.WriteMessage(websocket.PongMessage, nil); err != nil {
+				c.logger.Error("write error", slog.Any("err", err))
+			}
 		case websocket.TextMessage:
-			log.Printf("websocket payload received: %s", payload)
+			c.logger.Info("websocket payload received", slog.String("payload", string(payload)))
+			// TODO 给单个人发消息
+			// TODO 给群组发消息
 		}
 	}
+}
+
+type Hub struct {
+	logger *slog.Logger
+
+	registerCh   chan *Client
+	unregisterCh chan *Client
+
+	clients map[*Client]struct{}
+}
+
+func NewHub(logger *slog.Logger) *Hub {
+	return &Hub{
+		registerCh:   make(chan *Client),
+		unregisterCh: make(chan *Client),
+
+		clients: make(map[*Client]struct{}),
+	}
+}
+
+func (h *Hub) Start(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done(): // 服务退出
+			h.shutdown()
+			return
+		case client := <-h.registerCh:
+			h.register(client)
+		case client := <-h.unregisterCh:
+			h.unregister(client)
+		}
+	}
+}
+
+func (h *Hub) shutdown() {
+	for client := range h.clients {
+		client.conn.Close()
+	}
+}
+
+func (h *Hub) register(client *Client) {
+	h.clients[client] = struct{}{}
+}
+
+func (h *Hub) unregister(client *Client) {
+	client.conn.Close()
+	delete(h.clients, client)
+}
+
+// HandleConn handles websocket connections.
+func (h *Hub) HandleConn(conn *websocket.Conn) {
+	var userId string
+	var deviceId string
+
+	client := &Client{
+		logger:   h.logger.With(slog.String("userId", userId), slog.String("deviceId", deviceId)),
+		hub:      h,
+		conn:     conn,
+		userId:   userId,
+		deviceId: deviceId,
+	}
+
+	defer func() {
+		h.unregisterCh <- client
+	}()
+	h.registerCh <- client
+
+	client.Listen()
+}
+
+func (h *Hub) SendMessageToUser(userId string, message any) error {
+	panic("implement me")
+}
+
+func (h *Hub) SendMessageToGroup(groupId string, message any) error {
+	panic("implement me")
 }
