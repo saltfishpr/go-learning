@@ -4,202 +4,334 @@ import (
 	"bufio"
 	"context"
 	"crypto/rand"
-	"flag"
 	"fmt"
-	"io"
-	"log"
-	mrand "math/rand"
+	"log/slog"
+	"maps"
+	"net/http"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
 
+	"braces.dev/errtrace"
+	"github.com/labstack/echo/v4"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/core/peerstore"
+	"github.com/libp2p/go-libp2p/core/protocol"
 	"github.com/multiformats/go-multiaddr"
+	"github.com/sourcegraph/conc"
 )
 
-func handleStream(s network.Stream) {
-	log.Println("Got a new stream!")
-
-	// Create a buffer stream for non-blocking read and write.
-	rw := bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s))
-
-	go readData(rw)
-	go writeData(rw)
-
-	// stream 's' will stay open until you close it (or the other side closes it).
-}
-
-func readData(rw *bufio.ReadWriter) {
-	for {
-		str, _ := rw.ReadString('\n')
-
-		if str == "" {
-			return
-		}
-		if str != "\n" {
-			// Green console colour: 	\x1b[32m
-			// Reset console colour: 	\x1b[0m
-			fmt.Printf("\x1b[32m%s\x1b[0m> ", str)
-		}
-	}
-}
-
-func writeData(rw *bufio.ReadWriter) {
-	stdReader := bufio.NewReader(os.Stdin)
-
-	for {
-		fmt.Print("> ")
-		sendData, err := stdReader.ReadString('\n')
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		rw.WriteString(fmt.Sprintf("%s\n", sendData))
-		rw.Flush()
-	}
-}
-
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sourcePort := flag.Int("sp", 0, "Source port number")
-	dest := flag.String("d", "", "Destination multiaddr string")
-	help := flag.Bool("help", false, "Display help")
-	debug := flag.Bool("debug", false, "Debug generates the same node ID on every execution")
-
-	flag.Parse()
-
-	if *help {
-		fmt.Printf("This program demonstrates a simple p2p chat application using libp2p\n\n")
-		fmt.Println("Usage: Run './chat -sp <SOURCE_PORT>' where <SOURCE_PORT> can be any port number.")
-		fmt.Println("Now run './chat -d <MULTIADDR>' where <MULTIADDR> is multiaddress of previous listener host.")
-
-		os.Exit(0)
-	}
-
-	// If debug is enabled, use a constant random source to generate the peer ID. Only useful for debugging,
-	// off by default. Otherwise, it uses rand.Reader.
-	var r io.Reader
-	if *debug {
-		// Use the port number as the randomness source.
-		// This will always generate the same host ID on multiple executions, if the same port number is used.
-		// Never do this in production code.
-		r = mrand.New(mrand.NewSource(int64(*sourcePort)))
-	} else {
-		r = rand.Reader
-	}
-
-	h, err := makeHost(*sourcePort, r)
+	cfg, err := initConfig()
 	if err != nil {
-		log.Println(err)
-		return
+		panic(err)
 	}
 
-	if *dest == "" {
-		startPeer(ctx, h, handleStream)
-	} else {
-		rw, err := startPeerAndConnect(ctx, h, *dest)
-		if err != nil {
-			log.Println(err)
-			return
-		}
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		AddSource: true,
+		Level:     slog.LevelInfo,
+	}))
 
-		// Create a thread to read and write data.
-		go writeData(rw)
-		go readData(rw)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	}
-
-	// Wait forever
-	select {}
-}
-
-func makeHost(port int, randomness io.Reader) (host.Host, error) {
 	// Creates a new RSA key pair for this host.
-	prvKey, _, err := crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, randomness)
+	prvKey, _, err := crypto.GenerateKeyPairWithReader(crypto.RSA, 2048, rand.Reader)
 	if err != nil {
-		log.Println(err)
+		fatal(logger, err)
+	}
+
+	sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", cfg.ListenHost, cfg.ListenPort))
+	if err != nil {
+		fatal(logger, err)
+	}
+	logger.Info(fmt.Sprintf("Listening on: %s", sourceMultiAddr.String()))
+	host, err := libp2p.New(
+		libp2p.Identity(prvKey),
+		libp2p.ListenAddrs(sourceMultiAddr),
+	)
+	if err != nil {
+		fatal(logger, err)
+	}
+
+	app, err := NewApp(cfg, logger, host)
+	if err != nil {
+		fatal(logger, err)
+	}
+	go app.Start(ctx)
+	app.StartBackend(ctx)
+}
+
+func fatal(logger *slog.Logger, err error) {
+	logger.Error(fmt.Sprintf("%+v", err))
+	os.Exit(1)
+}
+
+type Conn struct {
+	logger *slog.Logger
+	stream network.Stream
+	done   chan struct{}
+}
+
+func NewConn(baseLogger *slog.Logger, stream network.Stream) *Conn {
+	return &Conn{
+		logger: baseLogger.With(slogAttrPeerID(stream.Conn().RemotePeer())),
+		stream: stream,
+		done:   make(chan struct{}),
+	}
+}
+
+func (c Conn) RemoteID() peer.ID {
+	return c.stream.Conn().RemotePeer()
+}
+
+func (c *Conn) Close() error {
+	if c.IsClosed() {
+		return errtrace.Errorf("conn already closed")
+	}
+
+	close(c.done)
+	return c.stream.Reset()
+}
+
+func (c *Conn) Send(message string) error {
+	if c.IsClosed() {
+		return errtrace.Errorf("conn already closed")
+	}
+
+	w := bufio.NewWriter(bufio.NewWriter(c.stream))
+	if _, err := w.WriteString(message); err != nil {
+		return errtrace.Wrap(err)
+	}
+	if err := w.Flush(); err != nil {
+		return errtrace.Wrap(err)
+	}
+	return nil
+}
+
+func (c *Conn) Recv() {
+	ch := c.recv()
+	for {
+		select {
+		case <-c.done:
+			return
+		case message, ok := <-ch:
+			if !ok {
+				return
+			}
+			c.logger.Info(message)
+		}
+	}
+}
+
+func (c *Conn) recv() <-chan string {
+	ch := make(chan string)
+	go func() {
+		defer close(ch)
+		r := bufio.NewReader(bufio.NewReader(c.stream))
+		for {
+			message, err := r.ReadString('\n')
+			if err != nil {
+				c.logger.Error("failed to read from peer", slog.Any("err", err))
+				return
+			}
+			ch <- message
+		}
+	}()
+	return ch
+}
+
+func (c *Conn) IsClosed() bool {
+	select {
+	case <-c.done:
+		return true
+	default:
+	}
+	return false
+}
+
+type App struct {
+	cfg       *config
+	logger    *slog.Logger
+	host      host.Host // libp2p host, 既是服务端也是客户端
+	protocol  protocol.ID
+	peerCh    <-chan peer.AddrInfo
+	messageCh chan string
+
+	connWg conc.WaitGroup
+	connMu sync.Mutex
+	conns  map[peer.ID]*Conn
+}
+
+func NewApp(cfg *config, logger *slog.Logger, host host.Host) (*App, error) {
+	peerCh, err := initMDNS(host, cfg.Rendezvous)
+	if err != nil {
 		return nil, err
 	}
 
-	// 0.0.0.0 will listen on any interface device.
-	sourceMultiAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port))
-
-	// libp2p.New constructs a new libp2p Host.
-	// Other options can be added here.
-	return libp2p.New(
-		libp2p.ListenAddrs(sourceMultiAddr),
-		libp2p.Identity(prvKey),
-	)
-}
-
-func startPeer(ctx context.Context, h host.Host, streamHandler network.StreamHandler) {
-	// Set a function as stream handler.
-	// This function is called when a peer connects, and starts a stream with this protocol.
-	// Only applies on the receiving side.
-	h.SetStreamHandler("/chat/1.0.0", streamHandler)
-
-	// Let's get the actual TCP port from our listen multiaddr, in case we're using 0 (default; random available port).
-	var port string
-	for _, la := range h.Network().ListenAddresses() {
-		if p, err := la.ValueForProtocol(multiaddr.P_TCP); err == nil {
-			port = p
-			break
-		}
+	a := &App{
+		cfg:       cfg,
+		logger:    logger,
+		host:      host,
+		protocol:  protocol.ID(cfg.Protocol),
+		peerCh:    peerCh,
+		messageCh: make(chan string),
+		conns:     make(map[peer.ID]*Conn),
 	}
 
-	if port == "" {
-		log.Println("was not able to find actual local port")
+	return a, nil
+}
+
+func (a *App) StartBackend(ctx context.Context) {
+	e := echo.New()
+
+	e.POST("/chat", func(c echo.Context) error {
+		type Req struct {
+			Message string `json:"message"`
+		}
+
+		reqBody := new(Req)
+		if err := c.Bind(&reqBody); err != nil {
+			return err
+		}
+		a.messageCh <- reqBody.Message
+		return c.NoContent(http.StatusOK)
+	})
+
+	e.GET("/statistics", func(c echo.Context) error {
+		conns := a.cloneConnMap()
+		return c.JSON(http.StatusOK, echo.Map{
+			"peersCount": len(conns),
+		})
+	})
+
+	go func() {
+		if err := e.Start(fmt.Sprintf(":%d", a.cfg.BackendPort)); err != nil && err != http.ErrServerClosed {
+			fatal(a.logger, err)
+		}
+	}()
+
+	<-ctx.Done()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := e.Shutdown(ctx); err != nil {
+		fatal(a.logger, err)
+	}
+}
+
+func (a *App) Start(ctx context.Context) {
+	a.host.SetStreamHandler(a.protocol, a.handleStream)
+
+	for {
+		select {
+		case <-ctx.Done():
+			a.shutdown()
+			return
+		case peer := <-a.peerCh:
+			if peer.ID > a.host.ID() {
+				continue
+			}
+			if err := a.connectPeer(ctx, peer); err != nil {
+				a.logger.Error("failed to connect to peer", slogAttrPeerID(peer.ID), slog.Any("err", err))
+			}
+		case message := <-a.messageCh:
+			a.sendMessage(ctx, message)
+		}
+	}
+}
+
+func (a *App) shutdown() {
+	for _, conn := range a.cloneConnMap() {
+		if err := conn.Close(); err != nil {
+			a.logger.Error("failed to close conn", slogAttrPeerID(conn.RemoteID()), slog.Any("err", err))
+		}
+		a.delConn(conn)
+	}
+	a.connWg.Wait()
+}
+
+// handleStream 处理对端连接.
+func (a *App) handleStream(stream network.Stream) {
+	a.logger.Info("connecting from peer", slogAttrPeerID(stream.Conn().RemotePeer()))
+
+	if _, ok := a.conns[stream.Conn().RemotePeer()]; ok {
+		a.logger.Info("peer already connected", slogAttrPeerID(stream.Conn().RemotePeer()))
+		if err := stream.Reset(); err != nil {
+			a.logger.Error("failed to reset stream", slogAttrPeerID(stream.Conn().RemotePeer()), slog.Any("err", err))
+		}
 		return
 	}
 
-	log.Printf("Run './chat -d /ip4/127.0.0.1/tcp/%v/p2p/%s' on another console.\n", port, h.ID().Pretty())
-	log.Println("You can replace 127.0.0.1 with public IP as well.")
-	log.Println("Waiting for incoming connection")
-	log.Println()
+	conn := NewConn(a.logger, stream)
+	go a.startConn(conn)
 }
 
-func startPeerAndConnect(ctx context.Context, h host.Host, destination string) (*bufio.ReadWriter, error) {
-	log.Println("This node's multiaddresses:")
-	for _, la := range h.Addrs() {
-		log.Printf(" - %v\n", la)
-	}
-	log.Println()
+// connectPeer 发现 peer 主动连接.
+func (a *App) connectPeer(ctx context.Context, peer peer.AddrInfo) error {
+	// check peer is already connected
 
-	// Turn the destination into a multiaddr.
-	maddr, err := multiaddr.NewMultiaddr(destination)
+	a.logger.Info("connecting to peer", slogAttrPeerID(peer.ID))
+	if err := a.host.Connect(ctx, peer); err != nil {
+		return errtrace.Wrap(err)
+	}
+
+	stream, err := a.host.NewStream(ctx, peer.ID, a.protocol)
 	if err != nil {
-		log.Println(err)
-		return nil, err
+		return errtrace.Wrap(err)
 	}
 
-	// Extract the peer ID from the multiaddr.
-	info, err := peer.AddrInfoFromP2pAddr(maddr)
-	if err != nil {
-		log.Println(err)
-		return nil, err
+	conn := NewConn(a.logger, stream)
+	go a.startConn(conn)
+
+	return nil
+}
+
+func (a *App) startConn(conn *Conn) {
+	a.connWg.Go(func() {
+		a.addConn(conn)
+		defer a.delConn(conn)
+
+		conn.Recv()
+	})
+}
+
+func (a *App) sendMessage(ctx context.Context, message string) {
+	for _, conn := range a.cloneConnMap() {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+		a.logger.Error("send message to peer", slogAttrPeerID(conn.RemoteID()), slog.String("message", message))
+		if err := conn.Send(message); err != nil {
+			a.logger.Error("failed to send message to peer", slogAttrPeerID(conn.RemoteID()), slog.Any("err", err))
+		}
 	}
+}
 
-	// Add the destination's peer multiaddress in the peerstore.
-	// This will be used during connection and stream creation by libp2p.
-	h.Peerstore().AddAddrs(info.ID, info.Addrs, peerstore.PermanentAddrTTL)
+func (a *App) addConn(conn *Conn) {
+	a.connMu.Lock()
+	defer a.connMu.Unlock()
+	a.conns[conn.RemoteID()] = conn
+}
 
-	// Start a stream with the destination.
-	// Multiaddress of the destination peer is fetched from the peerstore using 'peerId'.
-	s, err := h.NewStream(context.Background(), info.ID, "/chat/1.0.0")
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	log.Println("Established connection to destination")
+func (a *App) delConn(conn *Conn) {
+	a.connMu.Lock()
+	defer a.connMu.Unlock()
+	delete(a.conns, conn.RemoteID())
+}
 
-	// Create a buffered stream so that read and writes are non-blocking.
-	rw := bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s))
+func (a *App) cloneConnMap() map[peer.ID]*Conn {
+	a.connMu.Lock()
+	defer a.connMu.Unlock()
+	return maps.Clone(a.conns)
+}
 
-	return rw, nil
+func slogAttrPeerID(id peer.ID) slog.Attr {
+	return slog.String("peer", id.String())
 }
