@@ -29,7 +29,7 @@ func pathSum(root *TreeNode, targetSum int) (ans int) {
 			return
 		}
 		cur += node.Val
-		// 是否存在前缀和刚好等于cur−targetSum
+		// 是否存在前缀和刚好等于 cur−targetSum
 		ans += preSum[cur-targetSum]
 		preSum[cur]++
 		helper(node.Left, cur)

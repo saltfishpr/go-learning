@@ -8,7 +8,7 @@ func sumOfDistancesInTree(n int, edges [][]int) []int {
 		graph[j] = append(graph[j], i)
 	}
 
-	sz := make([]int, n) // 存储子节点数(包括自己)
+	sz := make([]int, n) // 存储子节点数（包括自己）
 	dp := make([]int, n) // dp[i] 表示以 i 为根的树，所有子节点到它的距离之和
 	var dfs func(int, int)
 	// u 当前节点，f 父节点

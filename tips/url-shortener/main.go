@@ -12,7 +12,7 @@ func main() {
 	println(s)
 }
 
-// generate 生成随机的 base62 字符串.
+// generate 生成随机的 base62 字符串。
 func generate(length int) (string, error) {
 	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 	bytes := make([]byte, length)

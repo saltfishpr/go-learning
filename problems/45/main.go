@@ -18,7 +18,7 @@ func jump(nums []int) int {
 func jump_V2(nums []int) int {
 	var (
 		maxPos int // 这一步能跳到的最远的位置
-		end    int // 上一步能跳到的位置, 到达 end 就要多跳一步
+		end    int // 上一步能跳到的位置，到达 end 就要多跳一步
 		step   int // 跳了几步
 	)
 
