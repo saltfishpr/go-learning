@@ -8,10 +8,15 @@ type MaxHeap[T constraints.Ordered] struct {
 	data []T
 }
 
+// NewMaxHeap returns a new instance of MaxHeap with the specified type.
 func NewMaxHeap[T constraints.Ordered]() MaxHeap[T] {
 	return MaxHeap[T]{}
 }
 
+// InitMaxHeap initializes a new MaxHeap with the specified values.
+//
+// values: variadic input values for initializing the MaxHeap.
+// MaxHeap[T]: returns a new instance of MaxHeap with the specified type.
 func InitMaxHeap[T constraints.Ordered](values ...T) MaxHeap[T] {
 	h := NewMaxHeap[T]()
 	for _, v := range values {
