@@ -1,20 +1,24 @@
 package main
 
-type ListNode struct {
-	Val  int
-	Next *ListNode
-}
+import "learning/data-structure/list"
+
+type ListNode = list.ListNode[int]
 
 func removeNthFromEnd(head *ListNode, n int) *ListNode {
 	dummy := &ListNode{Next: head}
-	slow, fast := dummy, dummy
+	prev := getNthFromEnd(dummy, n+1)
+	prev.Next = prev.Next.Next
+	return dummy.Next
+}
+
+func getNthFromEnd(head *ListNode, n int) *ListNode {
+	slow, fast := head, head
 	for i := 0; i < n; i++ {
 		fast = fast.Next
 	}
-	for fast.Next != nil {
-		fast = fast.Next
+	for fast != nil {
 		slow = slow.Next
+		fast = fast.Next
 	}
-	slow.Next, slow.Next.Next = slow.Next.Next, nil
-	return dummy.Next
+	return slow
 }

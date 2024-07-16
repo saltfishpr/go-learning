@@ -10,12 +10,10 @@ type ListNode = list.ListNode[int]
 
 func mergeKLists(lists []*ListNode) *ListNode {
 	pq := &PriorityQueue{}
-	heap.Init(pq)
 	for _, l := range lists {
-		if l == nil {
-			continue
+		if l != nil {
+			heap.Push(pq, l)
 		}
-		heap.Push(pq, l)
 	}
 	dummy := &ListNode{}
 	p := dummy

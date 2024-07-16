@@ -1,33 +1,25 @@
 package main
 
-type ListNode struct {
-	Val  int
-	Next *ListNode
-}
+import "learning/data-structure/list"
 
-// 链表长度为 a + b，成环的长度为 b
+type ListNode = list.ListNode[int]
+
 func detectCycle(head *ListNode) *ListNode {
 	slow, fast := head, head
-	// fast 一次走两步，slow 一次走一步，直到第一次相遇
-	// 此时 slow 走 nb 步，fast 走 2nb 步
-	for {
-		if fast == nil || fast.Next == nil {
-			return nil
-		}
-		fast = fast.Next.Next
+	for fast != nil && fast.Next != nil {
 		slow = slow.Next
+		fast = fast.Next.Next
 		if slow == fast {
 			break
 		}
 	}
-
-	// 需要让 slow 再走 a 步，就可以找到环的“入口”
-	// 此时让 fast 重新指向 head
-	// fast 和 slow 一起走，相遇节点则为环的“入口”
+	if fast == nil || fast.Next == nil {
+		return nil
+	}
 	fast = head
 	for slow != fast {
-		fast = fast.Next
 		slow = slow.Next
+		fast = fast.Next
 	}
 	return fast
 }

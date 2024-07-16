@@ -1,14 +1,8 @@
 package main
 
-func main() {
-	head := sliceToList(1, 4, 3, 2, 5, 2)
-	partition(head, 3)
-}
+import "learning/data-structure/list"
 
-type ListNode struct {
-	Val  int
-	Next *ListNode
-}
+type ListNode = list.ListNode[int]
 
 func partition(head *ListNode, x int) *ListNode {
 	dummy1 := &ListNode{}
@@ -29,22 +23,4 @@ func partition(head *ListNode, x int) *ListNode {
 
 	p1.Next = dummy2.Next
 	return dummy1.Next
-}
-
-func sliceToList(slice ...int) *ListNode {
-	if len(slice) == 0 {
-		return nil
-	}
-
-	// 初始化链表头节点
-	head := &ListNode{Val: slice[0]}
-	current := head
-
-	// 迭代 slice，创建链表
-	for _, val := range slice[1:] {
-		current.Next = &ListNode{Val: val}
-		current = current.Next
-	}
-
-	return head
 }

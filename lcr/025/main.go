@@ -1,52 +1,8 @@
 package main
 
-import (
-	"fmt"
-	"strconv"
-)
+import "learning/data-structure/list"
 
-func main() {
-	l1 := &ListNode{
-		Val: 7,
-		Next: &ListNode{
-			Val: 2,
-			Next: &ListNode{
-				Val: 4,
-				Next: &ListNode{
-					Val: 3,
-				},
-			},
-		},
-	}
-	l2 := &ListNode{
-		Val: 5,
-		Next: &ListNode{
-			Val: 6,
-			Next: &ListNode{
-				Val: 4,
-			},
-		},
-	}
-
-	fmt.Println(addTwoNumbers(l1, l2))
-}
-
-type ListNode struct {
-	Val  int
-	Next *ListNode
-}
-
-// String returns the string representation of a list.
-func (l *ListNode) String() string {
-	var s []byte
-	for l != nil {
-		s = strconv.AppendInt(s, int64(l.Val), 10)
-		if l = l.Next; l != nil {
-			s = append(s, ' ')
-		}
-	}
-	return string(s)
-}
+type ListNode = list.ListNode[int]
 
 func addTwoNumbers(l1 *ListNode, l2 *ListNode) *ListNode {
 	s1, s2 := list2Stack(l1), list2Stack(l2)

@@ -5,18 +5,18 @@ import "learning/data-structure/list"
 type ListNode = list.ListNode[int]
 
 func getIntersectionNode(headA, headB *ListNode) *ListNode {
-	pA, pB := headA, headB
-	for pA != pB {
-		if pA == nil {
-			pA = headB
+	p1, p2 := headA, headB
+	for p1 != p2 {
+		if p1 == nil {
+			p1 = headB
 		} else {
-			pA = pA.Next
+			p1 = p1.Next
 		}
-		if pB == nil {
-			pB = headA
+		if p2 == nil {
+			p2 = headA
 		} else {
-			pB = pB.Next
+			p2 = p2.Next
 		}
 	}
-	return pA
+	return p1
 }

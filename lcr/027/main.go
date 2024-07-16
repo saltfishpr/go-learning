@@ -1,9 +1,8 @@
 package main
 
-type ListNode struct {
-	Val  int
-	Next *ListNode
-}
+import "learning/data-structure/list"
+
+type ListNode = list.ListNode[int]
 
 func isPalindrome(head *ListNode) bool {
 	mid := findMid(head)
