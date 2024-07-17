@@ -26,7 +26,7 @@ func leftBound(nums []int, target int) int {
 		} else if nums[mid] > target {
 			r = mid - 1
 		} else if nums[mid] == target {
-			r = mid - 1 //
+			r = mid - 1 // 缩小右边界
 		}
 	}
 	if l < 0 || l >= len(nums) {
@@ -48,7 +48,7 @@ func rightBound(nums []int, target int) int {
 		} else if nums[mid] > target {
 			r = mid - 1
 		} else if nums[mid] == target {
-			l = mid + 1
+			l = mid + 1 // 缩小左边界
 		}
 	}
 	if r < 0 || r >= len(nums) {
