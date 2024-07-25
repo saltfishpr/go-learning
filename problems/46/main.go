@@ -1,9 +1,9 @@
 package main
 
 func permute(nums []int) [][]int {
-	var res [][]int
 	used := make([]bool, len(nums))
 
+	var res [][]int
 	var backtrack func(nums []int, path []int)
 	backtrack = func(nums, path []int) {
 		if len(path) == len(nums) {
