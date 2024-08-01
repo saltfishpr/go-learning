@@ -1,9 +1,5 @@
 package main
 
-func main() {
-	println(totalNQueens(16))
-}
-
 func totalNQueens(n int) int {
 	board := make([][]byte, n)
 	for i := 0; i < n; i++ {

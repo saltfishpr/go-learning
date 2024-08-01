@@ -2,10 +2,6 @@ package main
 
 import "sort"
 
-func main() {
-	combinationSum2([]int{10, 1, 2, 7, 6, 1, 5}, 8)
-}
-
 func combinationSum2(candidates []int, target int) [][]int {
 	sort.Ints(candidates)
 

@@ -1,6 +1,5 @@
 {
   "codeium.enableConfig": {
-    "*": true,
-    "go": false
+    "*": false
   }
 }

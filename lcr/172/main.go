@@ -1,11 +1,5 @@
 package main
 
-func main() {
-	scores := []int{2, 2, 3, 4, 4, 4, 5, 6, 6, 8}
-	target := 4
-	println(leftBound(scores, target))
-}
-
 func countTarget(scores []int, target int) int {
 	l := leftBound(scores, target)
 	r := rightBound(scores, target)

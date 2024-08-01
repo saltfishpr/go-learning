@@ -1,9 +1,5 @@
 package main
 
-func main() {
-	solveNQueens(4)
-}
-
 func solveNQueens(n int) [][]string {
 	// 初始化棋盘
 	board := make([][]byte, n)
