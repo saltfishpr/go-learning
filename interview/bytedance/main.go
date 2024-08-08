@@ -1,6 +1,7 @@
 package main
 
 func main() {
+	count := 10
 	done := make(chan struct{})
 	w1 := NewWorker(done)
 	w2 := NewWorker(done)
@@ -13,8 +14,7 @@ func main() {
 	}, w3)
 	go w3.Work(func() {
 		println(3)
-		w3.count++
-		if w3.count > 10 {
+		if w3.count > count {
 			close(done)
 		}
 	}, w1)
@@ -36,17 +36,18 @@ func NewWorker(done chan struct{}) *Worker {
 	}
 }
 
-func (p *Worker) Notify() {
-	p.sig <- struct{}{}
+func (w *Worker) Notify() {
+	w.sig <- struct{}{}
 }
 
-func (p *Worker) Work(f func(), next *Worker) {
+func (w *Worker) Work(f func(), next *Worker) {
 	for {
 		select {
-		case <-p.done:
-			close(p.sig)
+		case <-w.done:
+			close(w.sig)
 			return
-		case <-p.sig:
+		case <-w.sig:
+			w.count++
 			f()
 			next.Notify()
 		}
