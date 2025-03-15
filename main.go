@@ -1,5 +1,11 @@
 package main
 
+import (
+	"gormlinter/analyzer/v1"
+
+	"golang.org/x/tools/go/analysis/singlechecker"
+)
+
 func main() {
-	println("Hello, World!")
+	singlechecker.Main(analyzer.Analyzer)
 }
